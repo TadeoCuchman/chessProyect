@@ -1,23 +1,21 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {Chess} from "chess.js";
 import { Chessboard } from "react-chessboard";
 
 export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerMove}) {
   const [game, setGame] = useState(new Chess());
   const [boardOrientation, setBoardOrientation] = useState('white');
+  // const [turn, setTurn] = useState('w');
 
   useEffect(() => {
     if(fen != ''){
-      // const orientation = fen.split(' ')[2];
-      // if(orientation == 'b'){
-        // setBoardOrientation(orientation);
-      // }
       setGame(new Chess(fen))
     } else {
       setFen(game.fen())
     }
   }, [fen])
+
 
   useEffect(() => {
     if(triggerMove != null){
@@ -25,50 +23,67 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
     }
   },[triggerMove])
 
+
+
   const makeButtonMove = (move) => {
     let result = makeAMove(move)
 
     if(result == null){
-      setError('impossible move')
-      setTimeout(() => setError(''),1000)
+      setError('Impossible move')
+      setTimeout(() => setError(''), 1000)
     }
   }
 
 
-  function makeAMove(move) {
-    if(validMoves != null && move?.to == validMoves.to && move?.from == validMoves.from){
-      setMoveMessage('OK')
-      setValidMoves(null)
-      setTimeout(() => {
-        setMoveMessage('')
-      }, 1000)
-    }else if (validMoves  != null){
-      setMoveMessage('NO')
-      setTimeout(() => {
-        setMoveMessage('')
-      }, 500)
-      return false
-    }
+  const makeAMove = useCallback(
+    (move) => {
+      console.log('>>>>>>>>>>>move', move, validMoves)
+      
+      const gameCopy = { ...game };
+      const result = gameCopy.move(move);
+      console.log('>>>>>>>>>>>resulttt', result)
 
-    const gameCopy = { ...game };
-    const result = gameCopy.move(move);
+      //turn validation
+      // if(result == null){ 
+      //   setError('Not your turn')
+      //   setTimeout(() => setError(''),1000)
+      //   return false; 
+      // }
 
-    setFen(gameCopy.fen())
-    setGame(gameCopy);
+      if(validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves))){
+        setMoveMessage('OK')
+        setValidMoves(null)
+        setTimeout(() => {
+          setMoveMessage('')
+        }, 1000)
+      }else if (validMoves  != null){
+        setMoveMessage('NO')
+        gameCopy.undo(move);
+        setTimeout(() => {
+          setMoveMessage('')
+        }, 1000)
+        return false
+      }
 
-    if(result != null){
-      setLastMove(result.to);
-    }
+      // console.log('>>>>>>>>>>> jugadaaaaaaa')
+      setFen(gameCopy.fen())
+      setGame(gameCopy);
 
-    return result; // null if the move was illegal, the move object if the move was legal
-  }
+      if(result != null){
+        setLastMove(result.to);
+      }
+
+      return result; // null if the move was illegal, the move object if the move was legal
+    },
+    [game, validMoves]
+    )
 
 
   function onDrop(sourceSquare, targetSquare) {
     const move = makeAMove({
       from: sourceSquare,
       to: targetSquare,
-      promotion: "q", // always promote to a queen for example simplicity
+      promotion: "q",// always promote to a queen for example simplicity
     });
 
     // illegal move
