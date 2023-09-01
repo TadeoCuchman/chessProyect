@@ -10,16 +10,28 @@ function App() {
   const [moveMessage, setMoveMessage] = useState('');
   const [triggerMove, setTriggerMove] = useState(null)
   const [linesOk, setLinesOk] = useState({ line1: { checked: false, good: false }, line2: { checked: false, good: false }, line3: { checked: false, good: false } })
-  // const [nextLineMove, setNextLineMove] = useState('')
+  const [currentTurn, setCurrentTurn] = useState('')
+  const [levelLinesMoves,setLevelLinesMoves] = useState('')
   const [counter, setCounter] = useState({ goodMoves: 0, badMooves: 0 })
+
+
+  
+  useEffect(() => {
+    const firstFen = levelFen[currentLevel + 1].fen
+    setLevelLinesMoves(firstFen.split(' ')[1])
+  },[currentLevel])
+
+  useEffect(() => {
+    const orientation = fen.split(' ')[1];
+    setCurrentTurn(orientation);
+  },[fen])
+
 
   useEffect(() => {
     if (validMoves == null && moveMessage === 'OK') {
       setCounter({ ...counter, goodMoves: counter.goodMoves + 1 });
 
-      // Create a copy of linesOk
       const updatedLinesOk = { ...linesOk };
-
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
           if (updatedLinesOk[key].checked === true) {
@@ -27,7 +39,6 @@ function App() {
           }
         }
       }
-
       // Set the state with the updated object
       setLinesOk(updatedLinesOk);
 
@@ -36,7 +47,6 @@ function App() {
       setCounter({ ...counter, badMoves: counter.badMoves + 1 });
     }
   }, [moveMessage]);
-
 
 
 
@@ -113,7 +123,7 @@ function App() {
       <div> Good Mooves: {counter.goodMoves} -- Bad Mooves: {counter.badMooves}</div>
       {validMoves ? <span> ValidMove: {JSON.stringify(validMoves)} </span> : ''}
       <div className='gameContainer' style={{ width: '35%', minWidth: '450px' }}>
-        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerMove={triggerMove} />
+        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerMove={triggerMove}/>
       </div>
 
       <div>
@@ -131,12 +141,12 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <button onClick={() => {
-              if (validMoves == null && !linesOk.line1.good) {
+              if (validMoves == null && !linesOk.line1.good && levelLinesMoves == currentTurn) {
                 setTriggerMove(levelFen[currentLevel].line1.move)
                 setLinesOk({ ...linesOk, line1: { checked: true, good: false } })
-                // setTimeout(() => {
+                setTimeout(() => {
                   setValidMoves(levelFen[currentLevel].line1.response)
-                // }, 700)
+                }, 500)
 
               }
             }}>Line 1</button>
@@ -150,7 +160,7 @@ function App() {
                 setLinesOk({ ...linesOk, line2: { checked: true, good: false } })
                 setTimeout(() => {
                   setValidMoves(levelFen[currentLevel].line2.response)
-                }, 700)
+                }, 500)
               }
             }}>Line 2</button>
             {linesOk.line2.good ? <span>OK</span> : ''}
@@ -163,7 +173,7 @@ function App() {
                 setLinesOk({ ...linesOk, line3: { checked: true, good: false } })
                 setTimeout(() => {
                   setValidMoves(levelFen[currentLevel].line3.response)
-                }, 700)
+                }, 500)
               }
             }}>Line 3</button>
             {linesOk.line3.good ? <span>OK</span> : ''}

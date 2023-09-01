@@ -10,17 +10,12 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
 
   useEffect(() => {
     if(fen != ''){
-      // const orientation = fen.split(' ')[1];
-      // if(orientation == 'b'){
-      //   setTurn('b');
-      // }else {
-      //   setTurn('w');
-      // }
       setGame(new Chess(fen))
     } else {
       setFen(game.fen())
     }
   }, [fen])
+
 
   useEffect(() => {
     if(triggerMove != null){
@@ -55,7 +50,7 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
       //   return false; 
       // }
 
-      if(validMoves != null && (result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves)){
+      if(validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves))){
         setMoveMessage('OK')
         setValidMoves(null)
         setTimeout(() => {
