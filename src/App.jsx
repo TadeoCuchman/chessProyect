@@ -122,7 +122,7 @@ function App() {
       Chess Project
       <div> Good Mooves: {counter.goodMoves} -- Bad Mooves: {counter.badMooves}</div>
       {validMoves ? <span> ValidMove: {JSON.stringify(validMoves)} </span> : ''}
-      <div className='gameContainer' style={{ width: '35%', minWidth: '450px' }}>
+      <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
         <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerMove={triggerMove}/>
       </div>
 
