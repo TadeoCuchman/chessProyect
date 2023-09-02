@@ -3,30 +3,42 @@ import { useState, useEffect, useCallback } from "react";
 import {Chess} from "chess.js";
 import { Chessboard } from "react-chessboard";
 
-export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerMove}) {
+export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerLineMove}) {
   const [game, setGame] = useState(new Chess());
   const [boardOrientation, setBoardOrientation] = useState('white');
+  const [newFen, setNewFen] = useState(false);
   // const [turn, setTurn] = useState('w');
+  const realFen = 'r1bqk2r/ppp2ppp/2n2n2/3P4/2BP4/5N2/PP1N1PPP/R2QK2R b KQkq - 0 9'
 
   useEffect(() => {
     if(fen != ''){
+      console.log('lleg', fen);
       setGame(new Chess(fen))
+
+
     } else {
+      console.log('aca tambien', fen);
       setFen(game.fen())
     }
   }, [fen])
 
 
   useEffect(() => {
-    if(triggerMove != null){
-      makeButtonMove(triggerMove)
+    
+    if(triggerLineMove != null){
+      makeaButtonMove(triggerLineMove.move, triggerLineMove.fen)
     }
-  },[triggerMove])
+  },[triggerLineMove])
 
 
 
-  const makeButtonMove = (move) => {
-    let result = makeAMove(move)
+  const makeaButtonMove = (move, nextFen) => {
+    console.log('estooooo',move, nextFen)
+    const newGame = new Chess(nextFen);
+    const result = newGame.move(move);
+
+    setFen(newGame.fen())
+    setGame(newGame);
 
     if(result == null){
       setError('Impossible move')
@@ -75,7 +87,7 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
 
       return result; // null if the move was illegal, the move object if the move was legal
     },
-    [game, validMoves]
+    [game, validMoves, fen]
     )
 
 
