@@ -24,9 +24,12 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
 
   const makeaButtonMove = (move, nextFen) => {
     const newGame = new Chess(nextFen);
-    
-    const result = newGame.move(move);
+    let result = '';
 
+    if(move != null) {
+      result = newGame.move(move);
+    }
+    
     setFen(newGame.fen())
     setGame(newGame);
 
