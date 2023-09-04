@@ -88,7 +88,7 @@ function App() {
       fen: 'r1bqk2r/pppp1ppp/2n2n2/2b5/2BPP3/5N2/PP3PPP/RNBQK2R b KQkq - 0 6',
       validMoves: {
         line1: { move: 'd5', response: 'Be2' },
-        line2: { move: 'Ne4', response: 'Bd5' },
+        line2: { move: 'Nxe4', response: 'Bd5' },
         line3: { move: 'Ng4', response: 'cxd4' }
       },
 
@@ -96,9 +96,9 @@ function App() {
     5: {
       fen: 'r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/5N2/PP1B1PPP/RN1QK2R b KQkq - 2 7',
       validMoves: {
-        line1: { move: 'Ne4', response: 'cxd4' },
+        line1: { move: 'Nxe4', response: 'cxd4' },
         line2: { move: 'd3', response: 'exf6' },
-        line3: { move: 'Ng8', response: 'cxd4' }
+        line3: { move: 'Nxg8', response: 'cxd4' }
       },
 
     },
@@ -114,7 +114,7 @@ function App() {
     7: {
       fen: 'r1bqk2r/ppp2ppp/2n2n2/3P4/2BP4/5N2/PP1N1PPP/R2QK2R b KQkq - 0 9',
       validMoves: {
-        line1: { move: 'O-O', response: 'Nfe' },
+        line1: { move: 'O-O', response: 'Nxfe' },
         line2: { move: 'Bf5', response: 'Be3' },
         line3: { move: 'e6', response: 'Be3' }
       },
@@ -125,6 +125,7 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '95vh', justifyContent: 'space-evenly' }} >
       Chess Project
+      <span>LEVEL: {currentLevel}</span>
       <div> Good Mooves: {counter.goodMoves} -- Bad Mooves: {counter.badMoves}</div>
       {validMoves ? <span> ValidMove: {JSON.stringify(validMoves)} </span> : ''}
       <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
