@@ -14,7 +14,7 @@ function App() {
   const [triggerLineMove, settriggerLineMove] = useState(null)
   const [linesOk, setLinesOk] = useState(initialLinesOk)
   const [currentTurn, setCurrentTurn] = useState('')
-  const [levelLinesMoves,setLevelLinesMoves] = useState('')
+  const [levelLinesMoves, setLevelLinesMoves] = useState('')
   const [counter, setCounter] = useState({ goodMoves: 0, badMoves: 0 })
 
 
@@ -33,7 +33,7 @@ function App() {
 
 
   useEffect(() => {
-    if ( moveMessage === 'OK') {
+    if (moveMessage === 'OK') {
       setCounter({ ...counter, goodMoves: counter.goodMoves + 1 });
 
       const updatedLinesOk = { ...linesOk };
@@ -85,38 +85,38 @@ function App() {
 
     },
     4: {
-      fen: 'r1bqk2r/pppp1ppp/2n2n2/2b5/2BPP3/5N2/PP3PPP/RNBQK2R b KQkq - 0 6',
+      fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1P3/2Bp4/2P2N2/PP3PPP/RNBQK2R b KQkq - 0 6',
       validMoves: {
         line1: { move: 'd5', response: 'Be2' },
-        line2: { move: 'Nxe4', response: 'Bd5' },
+        line2: { move: 'Ne4', response: 'Bd5' },
         line3: { move: 'Ng4', response: 'cxd4' }
       },
 
     },
     5: {
-      fen: 'r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/5N2/PP1B1PPP/RN1QK2R b KQkq - 2 7',
+      fen: 'r1bqk2r/ppp2ppp/2n2n2/2bpP3/3p4/2P2N2/PP2BPPP/RNBQK2R b KQkq - 1 7',
       validMoves: {
-        line1: { move: 'Nxe4', response: 'cxd4' },
+        line1: { move: 'Ne4', response: 'cxd4' },
         line2: { move: 'd3', response: 'exf6' },
-        line3: { move: 'Nxg8', response: 'cxd4' }
+        line3: { move: 'Ng8', response: 'cxd4' }
       },
 
     },
     6: {
-      fen: 'r1bqk2r/pppp1ppp/2n2n2/8/2BPP3/5N2/PP1N1PPP/R2QK2R b KQkq - 0 8',
+      fen: 'r1bqk2r/ppp2ppp/2n5/2bpP3/3Pn3/5N2/PP2BPPP/RNBQK2R b KQkq - 0 8',
       validMoves: {
         line1: { move: 'Bb6', response: 'O-O' },
-        line2: { move: 'Be4', response: 'Bd2' },
+        line2: { move: 'Bb4', response: 'Bd2' },
         line3: { move: 'Be7', response: 'O-O' }
       },
 
     },
     7: {
-      fen: 'r1bqk2r/ppp2ppp/2n2n2/3P4/2BP4/5N2/PP1N1PPP/R2QK2R b KQkq - 0 9',
+      fen: 'r1bqk2r/ppp2ppp/1bn5/3pP3/3Pn3/5N2/PP2BPPP/RNBQ1RK1 b kq - 2 9',
       validMoves: {
-        line1: { move: 'O-O', response: 'Nxfe' },
+        line1: { move: 'O-O', response: 'Nc3' },
         line2: { move: 'Bf5', response: 'Be3' },
-        line3: { move: 'e6', response: 'Be3' }
+        line3: { move: 'f6', response: 'Nc3' }
       },
     }
   };
@@ -125,11 +125,10 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '95vh', justifyContent: 'space-evenly' }} >
       Chess Project
-      <span>LEVEL: {currentLevel}</span>
       <div> Good Mooves: {counter.goodMoves} -- Bad Mooves: {counter.badMoves}</div>
       {validMoves ? <span> ValidMove: {JSON.stringify(validMoves)} </span> : ''}
       <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
-        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove}/>
+        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} />
       </div>
 
       <div>
@@ -142,7 +141,7 @@ function App() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <button onClick={() => {
               if (validMoves == null && !linesOk.line1.good && levelLinesMoves == currentTurn) {
-                settriggerLineMove({move:levelFen[currentLevel].validMoves.line1.move, fen:levelFen[currentLevel].fen})
+                settriggerLineMove({ move: levelFen[currentLevel].validMoves.line1.move, fen: levelFen[currentLevel].fen })
                 setLinesOk({ ...linesOk, line1: { checked: true, good: false } })
                 setTimeout(() => {
                   setValidMoves(levelFen[currentLevel].validMoves.line1.response)
@@ -155,8 +154,8 @@ function App() {
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <button onClick={() => {
-              if (validMoves == null && linesOk.line1.good && !linesOk.line2.good ) {
-                settriggerLineMove({move:levelFen[currentLevel].validMoves.line2.move, fen: levelFen[currentLevel].fen})
+              if (validMoves == null && linesOk.line1.good && !linesOk.line2.good) {
+                settriggerLineMove({ move: levelFen[currentLevel].validMoves.line2.move, fen: levelFen[currentLevel].fen })
                 setLinesOk({ ...linesOk, line2: { checked: true, good: false } })
                 setTimeout(() => {
                   setValidMoves(levelFen[currentLevel].validMoves.line2.response)
@@ -169,7 +168,7 @@ function App() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <button onClick={() => {
               if (validMoves == null && linesOk.line1.good && linesOk.line2.good && !linesOk.line3.good) {
-                settriggerLineMove({move: levelFen[currentLevel].validMoves.line3.move, fen: levelFen[currentLevel].fen})
+                settriggerLineMove({ move: levelFen[currentLevel].validMoves.line3.move, fen: levelFen[currentLevel].fen })
                 setLinesOk({ ...linesOk, line3: { checked: true, good: false } })
                 setTimeout(() => {
                   setValidMoves(levelFen[currentLevel].validMoves.line3.response)
@@ -180,14 +179,15 @@ function App() {
           </div>
         </div> : ''}
 
-        <button onClick={() => {
-        setFen(levelFen[currentLevel + 1].fen);
-        setLinesOk(initialLinesOk)
-        if (currentLevel < 6) {
-          setCurrentLevel(currentLevel + 1);
+      <button onClick={() => {
 
+        if (currentLevel <= 6) {
+          setCurrentLevel(currentLevel + 1);
+          settriggerLineMove({move: null, fen: levelFen[currentLevel + 1].fen});
+          setLinesOk(initialLinesOk)
         } else {
-          setCurrentLevel(1)
+          setCurrentLevel(0)
+          settriggerLineMove({move: null, fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'})
         }
       }}>Next Level</button>
 
