@@ -6,21 +6,11 @@ import { Chessboard } from "react-chessboard";
 export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerLineMove}) {
   const [game, setGame] = useState(new Chess());
   const [boardOrientation, setBoardOrientation] = useState('white');
-  const [newFen, setNewFen] = useState(false);
   // const [turn, setTurn] = useState('w');
-  const realFen = 'r1bqk2r/ppp2ppp/2n2n2/3P4/2BP4/5N2/PP1N1PPP/R2QK2R b KQkq - 0 9'
 
   useEffect(() => {
-    if(fen != ''){
-      console.log('lleg', fen);
-      setGame(new Chess(fen))
-
-
-    } else {
-      console.log('aca tambien', fen);
-      setFen(game.fen())
-    }
-  }, [fen])
+    setFen(game.fen())
+  }, [])
 
 
   useEffect(() => {
@@ -33,8 +23,8 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
 
 
   const makeaButtonMove = (move, nextFen) => {
-    console.log('estooooo',move, nextFen)
     const newGame = new Chess(nextFen);
+    
     const result = newGame.move(move);
 
     setFen(newGame.fen())
@@ -62,7 +52,7 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
       //   return false; 
       // }
 
-      if(validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves))){
+      if(validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves) || (result?.san == validMoves))){
         setMoveMessage('OK')
         setValidMoves(null)
         setTimeout(() => {
