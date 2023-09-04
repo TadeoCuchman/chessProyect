@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import PlayRandomMoveEngine from './components/PlayRandomMoveEngine.jsx';
 
-const initialLinesOk = { line1: { checked: false }, line2: { checked: false }, line3: { checked: false } }
+const initialLinesOk = { line1: { checked: false }, line2: { checked: false }, line3: { checked: false } };
+const initialCounters = { goodMoves: 0, badMoves: 0 };
 
 function App() {
   const [fen, setFen] = useState('')
@@ -15,7 +16,7 @@ function App() {
   const [linesOk, setLinesOk] = useState(initialLinesOk)
   const [currentTurn, setCurrentTurn] = useState('')
   const [levelLinesMoves, setLevelLinesMoves] = useState('')
-  const [counter, setCounter] = useState({ goodMoves: 0, badMoves: 0 })
+  const [counters, setCounters] = useState(initialCounters)
 
 
   // makes that the one who is currently playing make the move first
@@ -34,7 +35,7 @@ function App() {
 
   useEffect(() => {
     if (moveMessage === 'OK') {
-      setCounter({ ...counter, goodMoves: counter.goodMoves + 1 });
+      setCounters({ ...counters, goodMoves: counters.goodMoves + 1 });
 
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
@@ -50,7 +51,7 @@ function App() {
       console.log(updatedLinesOk);
     } else if (moveMessage === 'NO') {
       console.log('no llega no');
-      setCounter({ ...counter, badMoves: counter.badMoves + 1 });
+      setCounters({ ...counters, badMoves: counters.badMoves + 1 });
     }
   }, [moveMessage]);
 
@@ -125,7 +126,8 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '95vh', justifyContent: 'space-evenly' }} >
       Chess Project
-      <div> Good Mooves: {counter.goodMoves} -- Bad Mooves: {counter.badMoves}</div>
+      <span>LEVEL: {currentLevel}</span>
+      <div> Good Mooves: {counters.goodMoves} -- Bad Mooves: {counters.badMoves}</div>
       {validMoves ? <span> ValidMove: {JSON.stringify(validMoves)} </span> : ''}
       <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
         <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} />
@@ -140,7 +142,9 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <button onClick={() => {
-              if (validMoves == null && !linesOk.line1.good && levelLinesMoves == currentTurn) {
+              if (validMoves == null && !linesOk.line1.good 
+                // && levelLinesMoves == currentTurn
+                ) {
                 settriggerLineMove({ move: levelFen[currentLevel].validMoves.line1.move, fen: levelFen[currentLevel].fen })
                 setLinesOk({ ...linesOk, line1: { checked: true, good: false } })
                 setTimeout(() => {
@@ -186,8 +190,9 @@ function App() {
           settriggerLineMove({move: null, fen: levelFen[currentLevel + 1].fen});
           setLinesOk(initialLinesOk)
         } else {
-          setCurrentLevel(0)
-          settriggerLineMove({move: null, fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'})
+          setCurrentLevel(1)
+          settriggerLineMove({move: null, fen: levelFen[1].fen})
+          setCounters(initialCounters)
         }
       }}>Next Level</button>
 
