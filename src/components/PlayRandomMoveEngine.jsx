@@ -47,13 +47,17 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
       const gameCopy = { ...game };
       const result = gameCopy.move(move);
       console.log('>>>>>>>>>>>resulttt', result)
+    
 
-      //turn validation
-      // if(result == null){ 
-      //   setError('Not your turn')
-      //   setTimeout(() => setError(''),1000)
-      //   return false; 
-      // }
+      // illegal move
+      if (result === null) {
+        setError('No Valid Move')
+        setTimeout(() => {
+          setError('')
+        }, 1000);
+        return false
+      };
+      
 
       if(validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves) || (result?.san == validMoves))){
         setMoveMessage('OK')
@@ -91,15 +95,6 @@ export default function PlayRandomMoveEngine({fen, setFen, setLastMove, setError
       promotion: "q",// always promote to a queen for example simplicity
     });
 
-    // illegal move
-    if (move === null) {
-      setError('No Valid Move')
-      setTimeout(() => {
-        setError('')
-      }, 1000);
-      return false
-    };
-    
     return true;
   }
 

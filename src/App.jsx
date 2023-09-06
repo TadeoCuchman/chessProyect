@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import PlayRandomMoveEngine from './components/PlayRandomMoveEngine.jsx';
 
-const initialLinesOk = { 1: { checked: false, good: false }, 2: { checked: false, good: false }, 3: { checked: false, good: false } };
+const initialLinesOk = { 1: { checked: false, answer: false, good: false }, 2: { checked: false, answer: false, good: false }, 3: { checked: false, answer: false, good: false } };
 const initialCounters = { goodMoves: 0, badMoves: 0 };
 
 const levelFen = {
@@ -76,7 +76,6 @@ function App() {
   const [moveMessage, setMoveMessage] = useState('');
   const [triggerLineMove, setTriggerLineMove] = useState(null);
   const [linesOk, setLinesOk] = useState(initialLinesOk);
-  const [currentLine, setCurrentLine] = useState(0);
   const [counters, setCounters] = useState(initialCounters);
 
   const [showOppeningsTable, setShowOppeningsTable] = useState(true);
@@ -109,64 +108,75 @@ function App() {
 
   useEffect(() => {
     if (moveMessage === 'OK') {
-      setCounters({ ...counters, goodMoves: counters.goodMoves + 1 });
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
           if (updatedLinesOk[key].checked === true) {
-            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, good: levelFen[currentLevel].validMoves[key].response };
+            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: true };
           }
         }
       }
       setLinesOk(updatedLinesOk);
-      setCenteredTextTop("Congratulations! The move is CORRECT!")
-      setValidationDisable(false)
-
-
+      setCounters({ ...counters, goodMoves: counters.goodMoves + 1 });
+      if(!updatedLinesOk[3].good){
+        setCenteredTextTop("Congratulations! The move is CORRECT!")
+        setCenteredTextBot("Click “Next Variation” to see the different black’s move")
+        setValidationButtonText('Next Variation');
+        setValidationDisable(false)
+      }else{
+        levelPassed();
+      }
+      
     } else if (moveMessage === 'NO') {
+
+      const updatedLinesOk = { ...linesOk };
+      for (const key in updatedLinesOk) {
+        if (updatedLinesOk.hasOwnProperty(key)) {
+          if (updatedLinesOk[key].checked === true && !updatedLinesOk[key].good) {
+            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: false };
+          }
+        }
+      }
+      setLinesOk(updatedLinesOk);
       setCounters({ ...counters, badMoves: counters.badMoves + 1 });
       setCenteredTextTop("It's not the best move in this position!")
       setCenteredTextBot('Try Again');
       setValidationButtonText('Try Again');
-      setValidationButtonText('Next Variation')
       setValidationDisable(false);
+      setTimeout(() => {
+        setCenteredTextBot('Guess the best move for white');
+      }, 700)
 
     }
   }, [moveMessage]);
 
 
   const chargeGame = (gameName) => {
-    let validMove = '';
     switch (gameName) {
       case 'italian':
-        if (validMoves == null && !linesOk[1].good
-          // && levelLinesMoves == currentTurn
-        ) {
+        if (validMoves == null && !linesOk[1].good) {
           setCurrentLevel(1)
           setTriggerLineMove({ move: null, fen: levelFen[1].fen })
-          validMove = levelFen[1].validMoves[1].response
-
         }
         break;
       default:
         break;
     }
-
-    setTimeout(() => {
-      setValidMoves(validMove)
-    }, 500)
     setShowOppeningsTable(false)
-
-
   }
 
-
+  const levelPassed = () => {
+    setCenteredTextTop('CONGRATULATIONS! You guessed all the best moves!')
+    setCenteredTextBot('');
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '95vh', justifyContent: 'space-evenly' }} >
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '95vh', justifyContent: 'space-evenly', textAlign:'center'}} >
       <h3>LEVEL: {currentLevel}</h3>
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-around' }}> <div><span style={{ color: 'green' }}>CORRECT MOVES</span> : {counters.goodMoves} </div>  <div><span style={{ color: 'red' }}>WRONG MOVES</span> : {counters.badMoves}</div></div>
-
+      <div style={{ position: 'absolute', top: '20px', width: '100%', display: 'flex', justifyContent: 'space-around' }}>
+        <div><span style={{ color: 'green' }}>CORRECT MOVES</span> : {counters.goodMoves} </div>
+        <div><span style={{ color: 'red' }}>WRONG MOVES</span> : {counters.badMoves}</div>
+      </div>
       {/* {validMoves ? <span> ValidMove: {JSON.stringify(validMoves)} </span> : ''} */}
 
       {showOppeningsTable ?
@@ -191,68 +201,79 @@ function App() {
               <td><button>Caro-Kann</button></td>
             </tr>
           </tbody>
-
         </table> :
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }} >
-          <p>{centeredTextTop}</p>
+          <span>{centeredTextTop}</span>
 
-          {/* validation button */}
-          <button disabled={validationDisable} onClick={() => {
-            if (validationButtonText == 'Next Variation') {
-              let line = 0;
-              const updatedLinesOk = { ...linesOk };
-              for (const key in updatedLinesOk) {
-                if (updatedLinesOk.hasOwnProperty(key)) {
-                  if (updatedLinesOk[key].checked === false) {
-                    updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, good: false };
-                    setValidationDisable(true);
-                    line = key;
-                    break;
+          {!linesOk[3].good ?
+            <button style={{marginTop: '10px'}} disabled={validationDisable} onClick={() => {
+              if (validationButtonText == 'Next Variation') {
+                let line = 0;
+                const updatedLinesOk = { ...linesOk };
+                for (const key in updatedLinesOk) {
+                  if (updatedLinesOk.hasOwnProperty(key)) {
+                    if (updatedLinesOk[key].checked === false) {
+                      updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: false, good: false };
+                      setValidationDisable(true);
+                      line = key;
+                      break;
+                    }
                   }
                 }
+                if (line > 0) {
+                  setValidMoves(levelFen[currentLevel].validMoves[line].response)
+                  setTriggerLineMove({ move: levelFen[currentLevel].validMoves[line].move, fen: levelFen[currentLevel].fen })
+                }
+                setLinesOk(updatedLinesOk);
+                setCenteredTextTop('This is one of the most common moves that black plays in this position.')
+                setCenteredTextBot('Guess the best move for white')
               }
-              if (line > 0) {
-                setTriggerLineMove({ move: levelFen[currentLevel].validMoves[line].move, fen: levelFen[currentLevel].fen })
-              }
-              setLinesOk(updatedLinesOk);
-              setCenteredTextTop('This is one of the most common moves that black plays in this position.')
-            }
-
-
-
-          }}>{validationButtonText}</button>
+            }}>{validationButtonText}</button>
+            : 'Click the Continue button below desired variation to move to the next move in this line.'}
 
           <div className='variationsBoxes'>
-            <div>
+            <div style={{position:'relative'}}>
               {linesOk[1].checked ?
                 <>
                   <span>Black’s move: {levelFen[currentLevel].validMoves[1].move}</span>
-                  <span>White’s move: {lastMove == levelFen[currentLevel].validMoves[1].response ? initialLinesOk[1].good : '?'} </span>
-                  <span>Result: {initialLinesOk[1].checked  != '' ? 'CORRECT' : 'WRONG' }</span>
+                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel].validMoves[1].response : '?'} </span>
+                  <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
+              {linesOk[3].good ?
+                <button className='continueButton' onClick={() => {
+                  setCurrentLevel(currentLevel + 1)
+                  setTriggerLineMove({ move: null, fen: levelFen[2].fen })
+                  setLinesOk(initialLinesOk);
+                  setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+                  setValidationDisable(false);
+                }}> Continue </button> : ''}
+
             </div>
 
-            <div>
+            <div style={{position:'relative'}}>
               {linesOk[2].checked ?
                 <>
                   <span>Black’s move:  {levelFen[currentLevel].validMoves[2].move}</span>
-                  <span>White’s move: ?</span>
-                  <span>Result:</span>
+                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel].validMoves[2].response : '?'} </span>
+                  <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
+                {linesOk[3].good ?
+                <button className='continueButton' disabled> Not yet available </button> : ''}
             </div>
 
-            <div>
+            <div style={{position:'relative'}}>
               {linesOk[3].checked ?
                 <>
                   <span>Black’s move:  {levelFen[currentLevel].validMoves[3].move}</span>
-                  <span>White’s move: ?</span>
-                  <span>Result:</span>
+                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel].validMoves[3].response : '?'} </span>
+                  <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
+                {linesOk[3].good ?
+                <button className='continueButton' disabled> Not yet available </button> : ''}
             </div>
           </div>
-          {centeredTextBot}
-
+          <span style={{margin: '10px'}}>{centeredTextBot}</span>
         </div>
       }
 

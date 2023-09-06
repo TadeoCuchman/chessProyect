@@ -31,8 +31,9 @@ button {
   flex-direction: row;
   width: 90%;
   /* border: 1px solid black; */
-  min-height: 120px;
-  margin: 20px;
+  min-height: 100px;
+  margin: 5px;
+  gap: 10px;
 
 }
 
@@ -43,5 +44,13 @@ button {
   border: 1px solid black;
   height: 80%;
   width: 30%;
-  padding-left: 20px;
+}
+
+.continueButton{
+  position: absolute;
+  height: 20px;
+  bottom: -20px;
+  right: 0;
+  width: 50%;
+  transform: translateX(-50%);
 }
