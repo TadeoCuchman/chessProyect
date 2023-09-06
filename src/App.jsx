@@ -246,6 +246,7 @@ function App() {
                   setTriggerLineMove({ move: null, fen: levelFen[2].fen })
                   setLinesOk(initialLinesOk);
                   setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+                  setValidationButtonText('Next Variation')
                   setValidationDisable(false);
                 }}> Continue </button> : ''}
 
