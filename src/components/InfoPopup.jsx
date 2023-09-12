@@ -1,4 +1,4 @@
-import './infoPopup.css';
+import './InfoPopup.css';
 
 const InfoPopup = ({ description, correctMove, setInfoPopupOpen }) => {
 
