@@ -1,76 +1,16 @@
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import './App.css'
 import PlayRandomMoveEngine from './components/PlayRandomMoveEngine.jsx';
 import InfoPopup from './components/InfoPopup';
 
-const initialLinesOk = { 1: { checked: false, answer: false, good: false }, 2: { checked: false, answer: false, good: false }, 3: { checked: false, answer: false, good: false } };
+const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, good: false, afterMoveFen: '' } };
 const initialCounters = { goodMoves: 0, badMoves: 0 };
-
-const levelFen = {
-  1: {
-    fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3',
-    validMoves: {
-      1: { move: 'Bc5', response: 'c3' },
-      2: { move: 'Nf6', response: 'd3' },
-      3: { move: 'Be7', response: 'd4' }
-    },
-  },
-  2: {
-    fen: 'r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/2P2N2/PP1P1PPP/RNBQK2R b KQkq - 0 4',
-    validMoves: {
-      1: { move: 'Nf6', response: 'd4' },
-      2: { move: 'Qe7', response: 'd4' },
-      3: { move: 'd6', response: 'd4' }
-    },
-
-  },
-  3: {
-    fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2BPP3/2P2N2/PP3PPP/RNBQK2R b KQkq d3 0 5',
-    validMoves: {
-      1: { move: 'exd4', response: 'e5' },
-      2: { move: 'Bb6', response: 'Nxe5' },
-      3: { move: 'Bd6', response: 'O-O' }
-    },
-
-  },
-  4: {
-    fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1P3/2Bp4/2P2N2/PP3PPP/RNBQK2R b KQkq - 0 6',
-    validMoves: {
-      1: { move: 'd5', response: 'Be2' },
-      2: { move: 'Ne4', response: 'Bd5' },
-      3: { move: 'Ng4', response: 'cxd4' }
-    },
-
-  },
-  5: {
-    fen: 'r1bqk2r/ppp2ppp/2n2n2/2bpP3/3p4/2P2N2/PP2BPPP/RNBQK2R b KQkq - 1 7',
-    validMoves: {
-      1: { move: 'Ne4', response: 'cxd4' },
-      2: { move: 'd3', response: 'exf6' },
-      3: { move: 'Ng8', response: 'cxd4' }
-    },
-
-  },
-  6: {
-    fen: 'r1bqk2r/ppp2ppp/2n5/2bpP3/3Pn3/5N2/PP2BPPP/RNBQK2R b KQkq - 0 8',
-    validMoves: {
-      1: { move: 'Bb6', response: 'O-O' },
-      2: { move: 'Bb4', response: 'Bd2' },
-      3: { move: 'Be7', response: 'O-O' }
-    },
-  },
-  7: {
-    fen: 'r1bqk2r/ppp2ppp/1bn5/3pP3/3Pn3/5N2/PP2BPPP/RNBQ1RK1 b kq - 2 9',
-    validMoves: {
-      1: { move: 'O-O', response: 'Nc3' },
-      2: { move: 'Bf5', response: 'Be3' },
-      3: { move: 'f6', response: 'Nc3' }
-    },
-  }
-}
 
 function App() {
   const [fen, setFen] = useState('');
+  const [levelFen, setLevelFen] = useState([]);
   const [validMoves, setValidMoves] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [error, setError] = useState('');
@@ -92,8 +32,6 @@ function App() {
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
 
 
-
-
   // const [currentTurn, setCurrentTurn] = useState('')
   // const [levelLinesMoves, setLevelLinesMoves] = useState('')
 
@@ -111,8 +49,70 @@ function App() {
   //   }
   // },[fen])
 
+  // const fetchLichessMovesPerFen = (fen) => {
+  //   const parsedFen = fen.replaceAll(' ', '%20');
+  //   fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=0&fen=' + parsedFen)
+  //   .then(response => {
+  //     return response.json();
+  //   })
+  //   .then(data => {
+  //     setLevelFen(transformLichessDataToLevels(fen, data.moves, false));
+  //     fetchLichessValidMove(fen)
+  //   })
+  //   .catch(error => {
+  //     console.error('Fetch error:', error);
+  //   });
+  // }
+
+
+  const fetchLichessValidMoves = (fen) => {
+    const parsedFen = fen.replaceAll(' ', '%20');
+    fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        console.log(data)
+        setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, separatePvs(data.pvs))])
+        console.log(levelFen)
+        setCurrentLevel(currentLevel + 1)
+        setTriggerLineMove({ move: null, fen: fen })
+        setLastMove({ from: 'ok', to: 'ok' });
+        setBadMovesCounter(0);
+        setLinesOk(initialLinesOk);
+        setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+        setValidationButtonText('Next Variation')
+        setValidationDisable(false);
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+      });
+  }
+
+  function separatePvs(pvs) {
+    return pvs.map((pv) => ({
+      moves: pv.moves.split(' ').map((move) => (move === "e1h1" ? "e1g1" : move)),
+      cp: pv.cp
+    }));
+  }
+
+  const transformLichessDataToLevel = (fen, moves) => {
+    const result = {
+      fen: fen,
+      validMoves: {
+        1: { move: moves[0].moves[0], response: moves[0].moves[1] },
+        2: { move: moves[1].moves[0], response: moves[1].moves[1] },
+        3: { move: moves[2].moves[0], response: moves[2].moves[1] }
+      },
+    }
+    console.log(result);
+    return result;
+  }
+
+
+  //show the correct moves when the popup displays
   useEffect(() => {
-    if(infoPopupOpen == true && validMoves != null){
+    if (infoPopupOpen == true && validMoves != null) {
       setTriggerValidationMove(true);
       setTimeout(() => {
         setTriggerValidationMove(false)
@@ -120,6 +120,7 @@ function App() {
     }
   }, [infoPopupOpen])
 
+  //changes the color of the squares
   useEffect(() => {
     if (lastMove.to != '') {
       if (beforeMoveStyles.from.square != '') {
@@ -131,7 +132,7 @@ function App() {
       if (lastMove.to != 'ok') {
         let fromSquare = document.querySelector(`[data-square= ${lastMove.from}]`)
         let toSquare = document.querySelector(`[data-square= ${lastMove.to}]`)
-        
+
         setBeforeMoveStyles({ from: { square: lastMove.from, color: fromSquare.style.backgroundColor }, to: { square: lastMove.to, color: toSquare.style.backgroundColor } });
 
         if (moveMessage == 'NO' && triggerValidationMove == true) {
@@ -149,14 +150,15 @@ function App() {
     }
   }, [lastMove])
 
-
+  // makes the validations of the moves and correct moves counters
   useEffect(() => {
     if (moveMessage === 'OK') {
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
-          if (updatedLinesOk[key].checked === true) {
-            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: true };
+          if (updatedLinesOk[key].checked === true && updatedLinesOk[key].afterMoveFen == '') {
+            console.log('showmessage', fen)
+            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: true, afterMoveFen: fen }
           }
         }
       }
@@ -173,7 +175,6 @@ function App() {
       }
 
     } else if (moveMessage === 'NO') {
-
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
@@ -203,9 +204,7 @@ function App() {
     switch (gameName) {
       case 'italian':
         if (validMoves == null && !linesOk[1].good) {
-          setCurrentLevel(1)
-          setTriggerLineMove({ move: null, fen: levelFen[1].fen })
-          setLastMove({ from: 'ok', to: 'ok' });
+          fetchLichessValidMoves('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
         }
         break;
       default:
@@ -272,8 +271,8 @@ function App() {
                   }
                 }
                 if (line > 0) {
-                  setValidMoves(levelFen[currentLevel].validMoves[line].response)
-                  setTriggerLineMove({ move: levelFen[currentLevel].validMoves[line].move, fen: levelFen[currentLevel].fen })
+                  setValidMoves(levelFen[currentLevel - 1].validMoves[line].response)
+                  setTriggerLineMove({ move: levelFen[currentLevel - 1].validMoves[line].move, fen: levelFen[currentLevel - 1].fen })
                 }
                 setLinesOk(updatedLinesOk);
                 setCenteredTextTop('This is one of the most common moves that black plays in this position.')
@@ -286,20 +285,13 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
-                  <span>Black’s move: {levelFen[currentLevel].validMoves[1].move}</span>
-                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel].validMoves[1].response : '?'} </span>
+                  <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
+                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' onClick={() => {
-                  setCurrentLevel(currentLevel + 1)
-                  setTriggerLineMove({ move: null, fen: levelFen[currentLevel + 1].fen })
-                  setLastMove({ from: 'ok', to: 'ok' });
-                  setBadMovesCounter(0);
-                  setLinesOk(initialLinesOk);
-                  setCenteredTextTop('Click "Next Variation" to see black’s most common move');
-                  setValidationButtonText('Next Variation')
-                  setValidationDisable(false);
+                  fetchLichessValidMoves(linesOk[1].afterMoveFen);
                 }}> Continue </button> : ''}
 
             </div>
@@ -307,23 +299,27 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[2].checked ?
                 <>
-                  <span>Black’s move:  {levelFen[currentLevel].validMoves[2].move}</span>
-                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel].validMoves[2].response : '?'} </span>
+                  <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
+                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
-                <button className='continueButton' disabled> Not yet available </button> : ''}
+                <button className='continueButton' onClick={() => {
+                  fetchLichessValidMoves(linesOk[2].afterMoveFen);
+                }}> Continue </button> : ''}
             </div>
 
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
-                  <span>Black’s move:  {levelFen[currentLevel].validMoves[3].move}</span>
-                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel].validMoves[3].response : '?'} </span>
+                  <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
+                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
-                <button className='continueButton' disabled> Not yet available </button> : ''}
+                <button className='continueButton' onClick={() => {
+                  fetchLichessValidMoves(linesOk[3].afterMoveFen);
+                }}> Continue </button> : ''}
             </div>
           </div>
           <span style={{ margin: '10px' }}>{centeredTextBot}</span>
