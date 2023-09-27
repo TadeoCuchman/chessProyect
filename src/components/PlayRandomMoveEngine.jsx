@@ -1,4 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
+
 import { useState, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
@@ -7,7 +9,7 @@ import { Chessboard } from "react-chessboard";
 export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerLineMove, triggerValidationMove }) {
   const [game, setGame] = useState(new Chess());
   // const engine = useMemo(() => new Engine(), []);
-  const [boardOrientation, setBoardOrientation] = useState('white');
+  const [boardOrientation] = useState('white');
   // const [turn, setTurn] = useState('w');
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setErro
           setError('')
         }, 1000);
         return false
-      };
+      }
 
 
       if (validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves) || (result?.san == validMoves) || (result?.from == validMoves.substring(0,2) && result?.to == validMoves.substring(2,4)) )) {
@@ -126,7 +128,7 @@ export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setErro
 
 
   function onDrop(sourceSquare, targetSquare) {
-  const move = makeAMove({
+  makeAMove({
   from: sourceSquare,
   to: targetSquare,
   promotion: "q",// always promote to a queen for example simplicity
