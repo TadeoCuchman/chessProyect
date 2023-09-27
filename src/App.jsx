@@ -72,9 +72,7 @@ function App() {
         return response.json();
       })
       .then(data => {
-        console.log(data)
         setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, separatePvs(data.pvs))])
-        console.log(levelFen)
         setCurrentLevel(currentLevel + 1)
         setTriggerLineMove({ move: null, fen: fen })
         setLastMove({ from: 'ok', to: 'ok' });
@@ -100,9 +98,9 @@ function App() {
     const result = {
       fen: fen,
       validMoves: {
-        1: { move: moves[0].moves[0], response: moves[0].moves[1] },
-        2: { move: moves[1].moves[0], response: moves[1].moves[1] },
-        3: { move: moves[2].moves[0], response: moves[2].moves[1] }
+        1: { move: moves[2].moves[0], response: moves[2].moves[1], cp: moves[2].cp },
+        2: { move: moves[1].moves[0], response: moves[1].moves[1], cp: moves[1].cp },
+        3: { move: moves[0].moves[0], response: moves[0].moves[1], cp: moves[0].cp }
       },
     }
     console.log(result);
@@ -199,7 +197,7 @@ function App() {
     }
   }, [moveMessage]);
 
-
+  //provsory before database
   const chargeGame = (gameName) => {
     switch (gameName) {
       case 'italian':
@@ -218,6 +216,10 @@ function App() {
   const levelPassed = () => {
     setCenteredTextTop('CONGRATULATIONS! You guessed all the best moves!')
     setCenteredTextBot('');
+  }
+
+  const convertCp = (cp) => {
+    return cp / 100;
   }
 
   return (
@@ -285,6 +287,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
+                  <span>Cp:  { convertCp(levelFen[currentLevel - 1].validMoves[1].cp) }</span>
                   <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
                   <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
@@ -299,6 +302,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[2].checked ?
                 <>
+                  <span>Cp:  { convertCp(levelFen[currentLevel - 1].validMoves[2].cp) }</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
                   <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
@@ -312,6 +316,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
+                  <span>Cp:  { convertCp(levelFen[currentLevel - 1].validMoves[3].cp) }</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
                   <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
