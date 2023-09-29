@@ -54,7 +54,7 @@ export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setErro
   }
 
   const makeaButtonMove = (move, nextFen) => {
-    console.log(move, nextFen);
+    // console.log(move, nextFen);
     const newGame = new Chess(nextFen);
     let result = '';
 
@@ -71,7 +71,7 @@ export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setErro
 
     setFen(newGame.fen())
     setGame(newGame);
-    console.log('>>>>>>>>>>>', newGame.fen())
+    // console.log('>>>>>>>>>>>', newGame.fen())
 
     if (result == null) {
       setError('Impossible move')
@@ -82,11 +82,11 @@ export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setErro
 
   const makeAMove = useCallback(
     (move) => {
-      console.log('>>>>>>>>>>>move', move, validMoves)
+      // console.log('>>>>>>>>>>>move', move, validMoves)
 
       const gameCopy = { ...game };
       const result = gameCopy.move(move);
-      console.log('>>>>>>>>>>>resulttt', result)
+      // console.log('>>>>>>>>>>>resulttt', result)
 
 
       // illegal move

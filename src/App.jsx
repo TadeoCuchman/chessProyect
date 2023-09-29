@@ -71,7 +71,12 @@ function App() {
       .then(response => {
         return response.json();
       })
-      .then(data => {
+      .then(result => {
+        const data = result
+        // if (data.error == 'Not found'){
+          
+        // }
+        console.log('LINES LICHESS DATA', data);
         setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, separatePvs(data.pvs))])
         setCurrentLevel(currentLevel + 1)
         setTriggerLineMove({ move: null, fen: fen })
@@ -98,12 +103,11 @@ function App() {
     const result = {
       fen: fen,
       validMoves: {
-        1: { move: moves[2].moves[0], response: moves[2].moves[1], cp: moves[2].cp },
+        1: { move: moves[0].moves[0], response: moves[2].moves[1], cp: moves[0].cp },
         2: { move: moves[1].moves[0], response: moves[1].moves[1], cp: moves[1].cp },
-        3: { move: moves[0].moves[0], response: moves[0].moves[1], cp: moves[0].cp }
+        3: { move: moves[2].moves[0], response: moves[0].moves[1], cp: moves[2].cp }
       },
     }
-    console.log(result);
     return result;
   }
 
