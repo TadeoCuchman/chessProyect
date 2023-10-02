@@ -9,7 +9,9 @@ const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterM
 const initialCounters = { goodMoves: 0, badMoves: 0 };
 
 function App() {
+
   const [fen, setFen] = useState('');
+  const [newFen, setNewFen] = useState('');
   const [levelFen, setLevelFen] = useState([]);
   const [validMoves, setValidMoves] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(0);
@@ -31,7 +33,6 @@ function App() {
 
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
 
-
   // const [currentTurn, setCurrentTurn] = useState('')
   // const [levelLinesMoves, setLevelLinesMoves] = useState('')
 
@@ -49,22 +50,43 @@ function App() {
   //   }
   // },[fen])
 
-  // const fetchLichessMovesPerFen = (fen) => {
-  //   const parsedFen = fen.replaceAll(' ', '%20');
-  //   fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=0&fen=' + parsedFen)
-  //   .then(response => {
-  //     return response.json();
-  //   })
-  //   .then(data => {
-  //     setLevelFen(transformLichessDataToLevels(fen, data.moves, false));
-  //     fetchLichessValidMove(fen)
-  //   })
-  //   .catch(error => {
-  //     console.error('Fetch error:', error);
-  //   });
-  // }
+  // fetch to players moves
+  const fetchLichessMovesPerFen = (fen) => {
+    const parsedFen = fen.replaceAll(' ', '%20');
+    fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=0&fen=' + parsedFen)
+    .then(response => {
+      return response.json();
+    })
+    .then(data => {
+      console.log('LINES players LICHESS DATA', data);
+      setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, data.moves)]);
+      setCurrentLevel(currentLevel + 1);
+      setTriggerLineMove({ move: null, fen: fen });
+      setLastMove({ from: 'ok', to: 'ok' });
+      setBadMovesCounter(0);
+      setLinesOk(initialLinesOk);
+      setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+      setValidationButtonText('Next Variation');
+      setValidationDisable(false);   
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+    });
+  }
 
+  const transformLichessDataToLevel = (fen, moves) => {
+    const result = {
+      fen: fen,
+      validMoves: {
+        1: { move: moves[0].uci, response: '', cp: '' },
+        2: { move: moves[1].uci, response: '', cp: '' },
+        3: { move: moves[2].uci, response: '', cp: '' }
+      },
+    }
+    return result;
+  }
 
+  // fetch to analysis
   const fetchLichessValidMoves = (fen) => {
     const parsedFen = fen.replaceAll(' ', '%20');
     fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
@@ -72,24 +94,34 @@ function App() {
         return response.json();
       })
       .then(result => {
-        const data = result
-        // if (data.error == 'Not found'){
-          
-        // }
-        console.log('LINES LICHESS DATA', data);
-        setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, separatePvs(data.pvs))])
-        setCurrentLevel(currentLevel + 1)
-        setTriggerLineMove({ move: null, fen: fen })
-        setLastMove({ from: 'ok', to: 'ok' });
-        setBadMovesCounter(0);
-        setLinesOk(initialLinesOk);
-        setCenteredTextTop('Click "Next Variation" to see black’s most common move');
-        setValidationButtonText('Next Variation')
-        setValidationDisable(false);
+        const data = result;
+        console.log('analysis data', data)
+        const pvs = separatePvs(data.pvs);
+        setValidMoves(pvs[0].moves[0]);
+        updateValidMove(currentLevel-1, pvs[0].moves[0], pvs[0].cp);
       })
       .catch(error => {
         console.error('Fetch error:', error);
       });
+  }
+
+  function updateValidMove(index, response, cp) {
+    setLevelFen((prev) => {
+      const newData = [...prev];
+      const validMoves = { ...newData[index].validMoves };
+  
+      for (const key in validMoves) {
+        if(!linesOk[key].answer){
+          if (validMoves.hasOwnProperty(key)) {
+            validMoves[key].response = response;
+            validMoves[key].cp = cp;
+          }
+        }
+      }
+  
+      newData[index].validMoves = validMoves;
+      return newData;
+    });
   }
 
   function separatePvs(pvs) {
@@ -99,18 +131,11 @@ function App() {
     }));
   }
 
-  const transformLichessDataToLevel = (fen, moves) => {
-    const result = {
-      fen: fen,
-      validMoves: {
-        1: { move: moves[0].moves[0], response: moves[2].moves[1], cp: moves[0].cp },
-        2: { move: moves[1].moves[0], response: moves[1].moves[1], cp: moves[1].cp },
-        3: { move: moves[2].moves[0], response: moves[0].moves[1], cp: moves[2].cp }
-      },
+  useEffect(() =>{
+    if(newFen != ''){
+      fetchLichessValidMoves(newFen);
     }
-    return result;
-  }
-
+  }, [newFen])
 
   //show the correct moves when the popup displays
   useEffect(() => {
@@ -148,7 +173,6 @@ function App() {
           toSquare.style.backgroundColor = '#FFFF66'
         }
       }
-
     }
   }, [lastMove])
 
@@ -159,7 +183,6 @@ function App() {
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
           if (updatedLinesOk[key].checked === true && updatedLinesOk[key].afterMoveFen == '') {
-            console.log('showmessage', fen)
             updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: true, afterMoveFen: fen }
           }
         }
@@ -206,7 +229,7 @@ function App() {
     switch (gameName) {
       case 'italian':
         if (validMoves == null && !linesOk[1].good) {
-          fetchLichessValidMoves('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
         }
         break;
       default:
@@ -227,7 +250,7 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '95vh', justifyContent: 'space-evenly', textAlign: 'center' }} >
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', textAlign: 'center' }} >
       <h3>LEVEL: {currentLevel}</h3>
       <div style={{ position: 'absolute', top: '20px', width: '100%', display: 'flex', justifyContent: 'space-around' }}>
         <div><span style={{ color: 'green' }}>CORRECT MOVES</span> : {counters.goodMoves} </div>
@@ -298,7 +321,7 @@ function App() {
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' onClick={() => {
-                  fetchLichessValidMoves(linesOk[1].afterMoveFen);
+                  fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                 }}> Continue </button> : ''}
 
             </div>
@@ -313,7 +336,7 @@ function App() {
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' onClick={() => {
-                  fetchLichessValidMoves(linesOk[2].afterMoveFen);
+                  fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
                 }}> Continue </button> : ''}
             </div>
 
@@ -327,7 +350,7 @@ function App() {
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' onClick={() => {
-                  fetchLichessValidMoves(linesOk[3].afterMoveFen);
+                  fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
                 }}> Continue </button> : ''}
             </div>
           </div>
@@ -336,7 +359,7 @@ function App() {
       }
 
       <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
-        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} />
+        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} />
       </div>
 
 
