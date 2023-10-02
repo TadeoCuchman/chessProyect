@@ -78,18 +78,24 @@ function App() {
     const result = {
       fen: fen,
       validMoves: {
-        1: { move: moves[0].uci, response: '', cp: '' },
-        2: { move: moves[1].uci, response: '', cp: '' },
-        3: { move: moves[2].uci, response: '', cp: '' }
+        1: { move: handleMove(moves[0].uci), response: '', cp: '' },
+        2: { move: handleMove(moves[1].uci), response: '', cp: '' },
+        3: { move: handleMove(moves[2].uci), response: '', cp: '' }
       },
     }
     return result;
   }
 
+  function handleMove(move) {
+    if(move == '' || move == null) return '';
+    if(move == 'e1h1') return 'e1g1';
+    return move;
+  }
+
   // fetch to analysis
   const fetchLichessValidMoves = (fen) => {
     const parsedFen = fen.replaceAll(' ', '%20');
-    fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
+    fetch('https://lichess.org/api/cloud-eval?multiPv=1&fen=' + parsedFen)
       .then(response => {
         return response.json();
       })
@@ -104,6 +110,7 @@ function App() {
         console.error('Fetch error:', error);
       });
   }
+  
 
   function updateValidMove(index, response, cp) {
     setLevelFen((prev) => {
@@ -126,10 +133,12 @@ function App() {
 
   function separatePvs(pvs) {
     return pvs.map((pv) => ({
-      moves: pv.moves.split(' ').map((move) => (move === "e1h1" ? "e1g1" : move)),
+      moves: pv.moves.split(' ').map((move) => handleMove(move)),
       cp: pv.cp
     }));
   }
+
+
 
   useEffect(() =>{
     if(newFen != ''){
@@ -226,14 +235,29 @@ function App() {
 
   //provsory before database
   const chargeGame = (gameName) => {
-    switch (gameName) {
-      case 'italian':
-        if (validMoves == null && !linesOk[1].good) {
-          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
-        }
-        break;
-      default:
-        break;
+    if (validMoves == null && !linesOk[1].good) {
+      switch (gameName) {
+        case 'italian':
+            fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          break;
+        case 'sicilian':
+            fetchLichessMovesPerFen('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2');
+          break;
+        case 'ruylopez':
+            fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          break;
+        case 'french':
+            fetchLichessMovesPerFen('rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
+          break;
+        case 'scoth':
+            fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3');
+          break;
+        case 'carokann':
+            fetchLichessMovesPerFen('rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
+          break;
+        default:
+          break;
+      }
     }
     setCounters(initialCounters)
     setBadMovesCounter(0);
@@ -268,15 +292,15 @@ function App() {
           <tbody>
             <tr>
               <td><button onClick={() => chargeGame("italian")}>Italian Game</button></td>
-              <td><button>Sicilian Defense</button></td>
+              <td><button onClick={() => chargeGame("sicilian")}>Sicilian Defense</button></td>
             </tr>
             <tr>
-              <td><button>Ruy-Lopez</button></td>
-              <td><button>French Defense</button></td>
+              <td><button onClick={() => chargeGame("ruylopez")}>Ruy-Lopez</button></td>
+              <td><button onClick={() => chargeGame("french")}>French Defense</button></td>
             </tr>
             <tr>
-              <td><button>Scotch Game</button></td>
-              <td><button>Caro-Kann</button></td>
+              <td><button onClick={() => chargeGame("scoth")}>Scotch Game</button></td>
+              <td><button onClick={() => chargeGame("carokann")}>Caro-Kann</button></td>
             </tr>
           </tbody>
         </table> :
@@ -320,7 +344,7 @@ function App() {
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
-                <button className='continueButton' onClick={() => {
+                <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
                   fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                 }}> Continue </button> : ''}
 
@@ -335,7 +359,7 @@ function App() {
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
-                <button className='continueButton' onClick={() => {
+                <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[2].moves ? levelFen[currentLevel - 1].validMoves[2].moves : ''} onClick={() => {
                   fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
                 }}> Continue </button> : ''}
             </div>
@@ -349,7 +373,7 @@ function App() {
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
-                <button className='continueButton' onClick={() => {
+                <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[3].moves ? levelFen[currentLevel - 1].validMoves[3].moves : ''} onClick={() => {
                   fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
                 }}> Continue </button> : ''}
             </div>
