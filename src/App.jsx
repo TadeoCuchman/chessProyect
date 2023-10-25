@@ -30,6 +30,7 @@ function App() {
   const [centeredTextBot, setCenteredTextBot] = useState('');
   const [validationButtonText, setValidationButtonText] = useState('Next Variation');
   const [validationDisable, setValidationDisable] = useState(false);
+  const [isWhitesMove, setIsWhitesMove] = useState(true);
 
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
 
@@ -50,46 +51,91 @@ function App() {
   //   }
   // },[fen])
 
+
+
   // fetch to players moves
   const fetchLichessMovesPerFen = (fen) => {
     const parsedFen = fen.replaceAll(' ', '%20');
     fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=0&fen=' + parsedFen)
-    .then(response => {
-      return response.json();
-    })
-    .then(data => {
-      console.log('LINES players LICHESS DATA', data);
-      setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, data.moves)]);
-      setCurrentLevel(currentLevel + 1);
-      setTriggerLineMove({ move: null, fen: fen });
-      setLastMove({ from: 'ok', to: 'ok' });
-      setBadMovesCounter(0);
-      setLinesOk(initialLinesOk);
-      setCenteredTextTop('Click "Next Variation" to see black’s most common move');
-      setValidationButtonText('Next Variation');
-      setValidationDisable(false);   
-    })
-    .catch(error => {
-      console.error('Fetch error:', error);
-    });
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        console.log('LINES players LICHESS DATA', data);
+        setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, data.moves)]);
+        setCurrentLevel(currentLevel + 1);
+        setTriggerLineMove({ move: null, fen: fen });
+        setLastMove({ from: 'ok', to: 'ok' });
+        setBadMovesCounter(0);
+        setLinesOk(initialLinesOk);
+        setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+        setValidationButtonText('Next Variation');
+        setValidationDisable(false);
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+      });
   }
+
+  // const transformLichessDataToLevel = (fen, moves) => {
+  //   const result = {
+  //     fen: fen,
+  //     validMoves: {
+  //       1: { move: handleMove(moves[0].uci ? moves[2].uci : ''), response: '', cp: '' },
+  //       2: { move: handleMove(moves[1].uci ? moves[2].uci : ''), response: '', cp: '' },
+  //       3: { move: handleMove(moves[2].uci ? moves[2].uci : ''), response: '', cp: '' }
+  //     },
+  //   }
+
+  //   return result;
+  // }
 
   const transformLichessDataToLevel = (fen, moves) => {
+
+    console.log('>>>>>>>>>>>', moves)
     const result = {
       fen: fen,
-      validMoves: {
-        1: { move: handleMove(moves[0].uci), response: '', cp: '' },
-        2: { move: handleMove(moves[1].uci), response: '', cp: '' },
-        3: { move: handleMove(moves[2].uci), response: '', cp: '' }
-      },
+      validMoves: {},
+    };
+
+    for (let i = 0; (i < moves.length) && (i < 3); i++) {
+      const moveNumber = i + 1;
+      console.log(moveNumber)
+
+      result.validMoves[moveNumber] = {
+        move: handleMove(moves[i].uci),
+        response: '',
+        cp: '',
+      };
     }
+    console.log(result);
     return result;
-  }
+  };
+
 
   function handleMove(move) {
-    if(move == '' || move == null) return '';
-    if(move == 'e1h1') return 'e1g1';
+    if (move == '' || move == null) return '';
+    if (move == 'e1h1') return 'e1g1';
+    if (move == 'e8h8') return 'e8g8';
     return move;
+  }
+
+
+  // fetch to best players best moves
+  const fetchLichessValidMovesPerFen = (fen) => {
+    const parsedFen = fen.replaceAll(' ', '%20');
+    fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=2500&fen=' + parsedFen)
+      .then(response => {
+        return response.json();
+      })
+      .then(data => {
+        console.log('LINES BEST PLAYER LICHESS DATA', data.topGames[0].uci);
+        setValidMoves(data.topGames[0].uci);
+        updateValidMove(currentLevel - 1, data.topGames[0].uci, null);
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+      });
   }
 
   // fetch to analysis
@@ -101,31 +147,35 @@ function App() {
       })
       .then(result => {
         const data = result;
-        console.log('analysis data', data)
-        const pvs = separatePvs(data.pvs);
-        setValidMoves(pvs[0].moves[0]);
-        updateValidMove(currentLevel-1, pvs[0].moves[0], pvs[0].cp);
+        console.log('analysis data', result.error)
+        if (result.error == 'Not found') {
+          fetchLichessValidMovesPerFen(fen)
+        } else {
+          const pvs = separatePvs(data.pvs);
+          setValidMoves(pvs[0].moves[0]);
+          updateValidMove(currentLevel - 1, pvs[0].moves[0], pvs[0].cp);
+        }
       })
       .catch(error => {
         console.error('Fetch error:', error);
       });
   }
-  
+
 
   function updateValidMove(index, response, cp) {
     setLevelFen((prev) => {
       const newData = [...prev];
       const validMoves = { ...newData[index].validMoves };
-  
+
       for (const key in validMoves) {
-        if(!linesOk[key].answer){
+        if (!linesOk[key].answer) {
           if (validMoves.hasOwnProperty(key)) {
             validMoves[key].response = response;
             validMoves[key].cp = cp;
           }
         }
       }
-  
+
       newData[index].validMoves = validMoves;
       return newData;
     });
@@ -140,8 +190,8 @@ function App() {
 
 
 
-  useEffect(() =>{
-    if(newFen != ''){
+  useEffect(() => {
+    if (newFen != '') {
       fetchLichessValidMoves(newFen);
     }
   }, [newFen])
@@ -234,26 +284,32 @@ function App() {
   }, [moveMessage]);
 
   //provsory before database
-  const chargeGame = (gameName) => {
+  const chargeGame = (gameName, worb) => {
+    if(worb == 'w'){
+      setIsWhitesMove(true);
+    } else if (worb == 'b'){
+      setIsWhitesMove(false);
+    }
+
     if (validMoves == null && !linesOk[1].good) {
       switch (gameName) {
         case 'italian':
-            fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
           break;
         case 'sicilian':
-            fetchLichessMovesPerFen('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2');
+          fetchLichessMovesPerFen('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2');
           break;
         case 'ruylopez':
-            fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
           break;
         case 'french':
-            fetchLichessMovesPerFen('rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
+          fetchLichessMovesPerFen('rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
           break;
         case 'scoth':
-            fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3');
+          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3');
           break;
         case 'carokann':
-            fetchLichessMovesPerFen('rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
+          fetchLichessMovesPerFen('rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
           break;
         default:
           break;
@@ -291,16 +347,16 @@ function App() {
           </thead>
           <tbody>
             <tr>
-              <td><button onClick={() => chargeGame("italian")}>Italian Game</button></td>
-              <td><button onClick={() => chargeGame("sicilian")}>Sicilian Defense</button></td>
+              <td><button onClick={() => chargeGame("italian",'w')}>Italian Game</button></td>
+              <td><button onClick={() => chargeGame("sicilian",'b')}>Sicilian Defense</button></td>
             </tr>
             <tr>
-              <td><button onClick={() => chargeGame("ruylopez")}>Ruy-Lopez</button></td>
-              <td><button onClick={() => chargeGame("french")}>French Defense</button></td>
+              <td><button onClick={() => chargeGame("ruylopez",'w')}>Ruy-Lopez</button></td>
+              <td><button onClick={() => chargeGame("french",'b')}>French Defense</button></td>
             </tr>
             <tr>
-              <td><button onClick={() => chargeGame("scoth")}>Scotch Game</button></td>
-              <td><button onClick={() => chargeGame("carokann")}>Caro-Kann</button></td>
+              <td><button onClick={() => chargeGame("scoth",'w')}>Scotch Game</button></td>
+              <td><button onClick={() => chargeGame("carokann'b'",)}>Caro-Kann</button></td>
             </tr>
           </tbody>
         </table> :
@@ -335,10 +391,39 @@ function App() {
             : 'Click the Continue button below desired variation to move to the next move in this line.'}
 
           <div className='variationsBoxes'>
+
+            {/* {setTimeout(() => {
+              const validMoves = levelFen[currentLevel - 1].validMoves; // Assuming levelFen is an array of objects
+              const keys = Object.keys(validMoves);
+
+              keys.map((key) => {
+                const validMove = validMoves[key];
+                return (
+                  <div style={{ position: 'relative' }} key={key}>
+                    {linesOk[1].checked ? (
+                      <>
+                        <span>Cp: {convertCp(validMove.cp)}</span>
+                        <span>Black’s move: {validMove.move}</span>
+                        <span>White’s move: {linesOk[1].good ? validMove.response : '?'}</span>
+                        <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
+                      </>
+                    ) : ''}
+                    {linesOk[3].good ? (
+                      <button className='continueButton' disabled={validMove.moves ? validMove.moves : ''} onClick={() => {
+                        fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
+                      }}> Continue </button>
+                    ) : ''}
+                  </div>
+                );
+              });
+            }, 300)
+
+            } */}
+
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
-                  <span>Cp:  { convertCp(levelFen[currentLevel - 1].validMoves[1].cp) }</span>
+                  <span>Cp:  {convertCp(levelFen[currentLevel - 1].validMoves[1].cp)}</span>
                   <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
                   <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
@@ -353,7 +438,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[2].checked ?
                 <>
-                  <span>Cp:  { convertCp(levelFen[currentLevel - 1].validMoves[2].cp) }</span>
+                  <span>Cp:  {convertCp(levelFen[currentLevel - 1].validMoves[2].cp)}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
                   <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
@@ -367,7 +452,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
-                  <span>Cp:  { convertCp(levelFen[currentLevel - 1].validMoves[3].cp) }</span>
+                  <span>Cp:  {convertCp(levelFen[currentLevel - 1].validMoves[3].cp)}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
                   <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
@@ -383,7 +468,7 @@ function App() {
       }
 
       <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
-        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} />
+        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
       </div>
 
 
