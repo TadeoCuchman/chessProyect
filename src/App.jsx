@@ -141,13 +141,13 @@ function App() {
   // fetch to analysis
   const fetchLichessValidMoves = (fen) => {
     const parsedFen = fen.replaceAll(' ', '%20');
-    fetch('https://lichess.org/api/cloud-eval?multiPv=1&fen=' + parsedFen)
+    fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
       .then(response => {
         return response.json();
       })
       .then(result => {
         const data = result;
-        console.log('analysis data', result.error)
+        console.log('analysis data',data)
         if (result.error == 'Not found') {
           fetchLichessValidMovesPerFen(fen)
         } else {
