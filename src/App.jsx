@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react'
 import './App.css'
-import PlayRandomMoveEngine from './components/PlayRandomMoveEngine.jsx';
+import Game from './components/Game.jsx';
 import InfoPopup from './components/InfoPopup';
 
 const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, good: false, afterMoveFen: '' } };
@@ -13,6 +13,7 @@ function App() {
   const [fen, setFen] = useState('');
   const [newFen, setNewFen] = useState('');
   const [levelFen, setLevelFen] = useState([]);
+  const [rating, setRating] = useState(0);
   const [validMoves, setValidMoves] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [error, setError] = useState('');
@@ -56,21 +57,28 @@ function App() {
   // fetch to players moves
   const fetchLichessMovesPerFen = (fen) => {
     const parsedFen = fen.replaceAll(' ', '%20');
-    fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=0&fen=' + parsedFen)
+    fetch(`https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=${rating}&fen=` + parsedFen)
       .then(response => {
         return response.json();
       })
       .then(data => {
         console.log('LINES players LICHESS DATA', data);
-        setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, data.moves)]);
-        setCurrentLevel(currentLevel + 1);
-        setTriggerLineMove({ move: null, fen: fen });
-        setLastMove({ from: 'ok', to: 'ok' });
-        setBadMovesCounter(0);
-        setLinesOk(initialLinesOk);
-        setCenteredTextTop('Click "Next Variation" to see black’s most common move');
-        setValidationButtonText('Next Variation');
-        setValidationDisable(false);
+        if(data.moves.length > 0){
+          setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, data.moves)]);
+          setCurrentLevel(currentLevel + 1);
+          setTriggerLineMove({ move: null, fen: fen });
+          setLastMove({ from: 'ok', to: 'ok' });
+          setBadMovesCounter(0);
+          setLinesOk(initialLinesOk);
+          setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+          setValidationButtonText('Next Variation');
+          setValidationDisable(false);
+        } else {
+          setValidationButtonText('Ok');
+          setCenteredTextTop('There is no more moves in the database.');
+
+        }
+
       })
       .catch(error => {
         console.error('Fetch error:', error);
@@ -325,9 +333,10 @@ function App() {
     setCenteredTextBot('');
   }
 
-  const convertCp = (cp) => {
-    return cp / 100;
-  }
+  //this converts to pawns on white perspective
+  // const convertCp = (cp) => {
+  //   return cp / 100;
+  // }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', textAlign: 'center' }} >
@@ -337,8 +346,23 @@ function App() {
         <div><span style={{ color: 'red' }}>WRONG MOVES</span> : {counters.badMoves}</div>
       </div>
 
-      {showOppeningsTable ?
-        <table>
+
+
+      {showOppeningsTable ? 
+      <>
+      <span>Rating</span>
+      <select name="levelpicklist" onChange={(e) => setRating(e.target.value)}>
+        <option value="0">0-1000</option>
+        <option value="1000">1000-1200</option>
+        <option value="1200">1200-1400</option>
+        <option value="1400">1400-1600</option>
+        <option value="1600">1600-1800</option>
+        <option value="1800">1800-2000</option>
+        <option value="2000">2000-2200</option>
+        <option value="2500">2200-2500</option>
+      </select>
+      
+      <table>
           <thead>
             <tr>
               <th>WHITE PIECES</th>
@@ -359,7 +383,9 @@ function App() {
               <td><button onClick={() => chargeGame("carokann'b'",)}>Caro-Kann</button></td>
             </tr>
           </tbody>
-        </table> :
+        </table>
+      </>
+         :
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }} >
           <span>{centeredTextTop}</span>
@@ -423,7 +449,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
-                  <span>Cp:  {convertCp(levelFen[currentLevel - 1].validMoves[1].cp)}</span>
+                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[1].cp)}</span>
                   <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
                   <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
@@ -438,7 +464,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[2].checked ?
                 <>
-                  <span>Cp:  {convertCp(levelFen[currentLevel - 1].validMoves[2].cp)}</span>
+                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[2].cp)}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
                   <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
@@ -452,7 +478,7 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
-                  <span>Cp:  {convertCp(levelFen[currentLevel - 1].validMoves[3].cp)}</span>
+                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[3].cp)}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
                   <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
@@ -468,7 +494,7 @@ function App() {
       }
 
       <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
-        <PlayRandomMoveEngine fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
+        <Game fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
       </div>
 
 

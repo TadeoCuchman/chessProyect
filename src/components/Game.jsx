@@ -6,7 +6,7 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 // import Engine from "./integration/Engine.ts";
 
-export default function PlayRandomMoveEngine({ fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerLineMove, triggerValidationMove, setNewFen, isWhitesMove }) {
+export default function Game({ fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerLineMove, triggerValidationMove, setNewFen, isWhitesMove }) {
   const [game, setGame] = useState(new Chess());
   // const engine = useMemo(() => new Engine(), []);
   const [boardOrientation, setBoardOrientation] = useState('white');
