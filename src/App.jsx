@@ -341,6 +341,7 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', textAlign: 'center' }} >
       <h3>LEVEL: {currentLevel}</h3>
+      <h6>Rating: {rating}</h6>
       <div style={{ position: 'absolute', top: '20px', width: '100%', display: 'flex', justifyContent: 'space-around' }}>
         <div><span style={{ color: 'green' }}>CORRECT MOVES</span> : {counters.goodMoves} </div>
         <div><span style={{ color: 'red' }}>WRONG MOVES</span> : {counters.badMoves}</div>
@@ -350,7 +351,6 @@ function App() {
 
       {showOppeningsTable ? 
       <>
-      <span>Rating</span>
       <select name="levelpicklist" onChange={(e) => setRating(e.target.value)}>
         <option value="0">0-1000</option>
         <option value="1000">1000-1200</option>
