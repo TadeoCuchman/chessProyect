@@ -1,15 +1,15 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react/prop-types */
-
 import { useState, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 // import Engine from "./integration/Engine.ts";
+import MovesBoard from '../components/MovesBorad'
+
 
 export default function Game({ fen, setFen, setLastMove, setError, validMoves, setValidMoves, setMoveMessage, triggerLineMove, triggerValidationMove, setNewFen, isWhitesMove }) {
   const [game, setGame] = useState(new Chess());
   // const engine = useMemo(() => new Engine(), []);
   const [boardOrientation, setBoardOrientation] = useState('white');
+  const [movesArray, setMovesArray] = useState([]);
   // const [turn, setTurn] = useState('w');
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
   useEffect(() => {
     if (isWhitesMove != null) {
-      if(isWhitesMove == true) {
+      if (isWhitesMove == true) {
         setBoardOrientation('white')
       } else {
         setBoardOrientation('black')
@@ -53,7 +53,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
   //     }
   //   });
   // }
- 
+
   const makeValidationMove = () => {
     const result = game.move({
       from: validMoves.substring(0, 2),
@@ -77,6 +77,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
       });
       if (result != null) {
         setLastMove({ from: result.from, to: result.to });
+        actualizeMovesArray(`${result.from}${result.to}`);
         setNewFen(newGame.fen())
       }
     }
@@ -111,7 +112,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
       }
 
 
-      if (validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves) || (result?.san == validMoves) || (result?.from == validMoves.substring(0,2) && result?.to == validMoves.substring(2,4)) )) {
+      if (validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves) || (result?.san == validMoves) || (result?.from == validMoves.substring(0, 2) && result?.to == validMoves.substring(2, 4)))) {
         setMoveMessage('OK')
         setTimeout(() => {
           setValidMoves(null)
@@ -131,6 +132,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
       if (result != null) {
         setLastMove({ from: result.from, to: result.to });
+        actualizeMovesArray(`${result.from}${result.to}`);
       }
 
       return result; // null if the move was illegal, the move object if the move was legal
@@ -140,14 +142,23 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
 
   function onDrop(sourceSquare, targetSquare) {
-  makeAMove({
-  from: sourceSquare,
-  to: targetSquare,
-  promotion: "q",// always promote to a queen for example simplicity
-  });
+    makeAMove({
+      from: sourceSquare,
+      to: targetSquare,
+      promotion: "q",// always promote to a queen for example simplicity
+    });
 
-  return true;
+    return true;
   }
+  
+  const actualizeMovesArray = (move)  => {
+    setMovesArray([...movesArray, move])
+  };
 
-  return <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />;
+  return (
+
+    <div style={{ position: 'relative' }}>
+      <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />
+      <MovesBoard movesArray={movesArray} />
+    </div>);
 }

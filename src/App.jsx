@@ -1,9 +1,8 @@
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable react-hooks/exhaustive-deps */
+
 import { useEffect, useState } from 'react'
 import './App.css'
 import Game from './components/Game.jsx';
-import InfoPopup from './components/InfoPopup';
+import InfoPopup from './components/InfoPopup.jsx';
 
 const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, good: false, afterMoveFen: '' } };
 const initialCounters = { goodMoves: 0, badMoves: 0 };
@@ -493,10 +492,9 @@ function App() {
         </div>
       }
 
-      <div className='gameContainer' style={{ width: '35%', minWidth: '375px' }}>
+      <div className='gameContainer' style={{position: 'relative', width: '35%', minWidth: '375px' }}>
         <Game fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
       </div>
-
 
       {error != '' ? <span style={{ position: 'absolute', top: '4%', color: 'red', backgroundColor: 'pink', borderRadius: '5px', padding: '2px', fontSize: '1.5rem' }}>{error}</span> : ''}
       {infoPopupOpen ? <InfoPopup correctMove={validMoves} description='' setInfoPopupOpen={setInfoPopupOpen} /> : ""}
