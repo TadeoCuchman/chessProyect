@@ -26,9 +26,10 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     if (isWhitesMove != null) {
       if (isWhitesMove == true) {
         setBoardOrientation('white')
+        // setTurn('w')
       } else {
         setBoardOrientation('black')
-
+        // setTurn('b')
       }
     }
   }, [isWhitesMove])
@@ -76,8 +77,9 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
         promotion: move.substring(4, 5),
       });
       if (result != null) {
+        console.log(result);
         setLastMove({ from: result.from, to: result.to });
-        actualizeMovesArray(`${result.from}${result.to}`);
+        actualizeMovesArray(`${result.from}${result.to}`, result.color);
         setNewFen(newGame.fen())
       }
     }
@@ -131,8 +133,10 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
       setGame(gameCopy);
 
       if (result != null) {
+        console.log(result);
+
         setLastMove({ from: result.from, to: result.to });
-        actualizeMovesArray(`${result.from}${result.to}`);
+        actualizeMovesArray(`${result.from}${result.to}`, result.color);
       }
 
       return result; // null if the move was illegal, the move object if the move was legal
@@ -151,14 +155,17 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     return true;
   }
   
-  const actualizeMovesArray = (move)  => {
-    setMovesArray([...movesArray, move])
+  const actualizeMovesArray = (move, color)  => {
+    const infoMove = {move: move, turn: color};
+    setMovesArray([...movesArray, infoMove])
   };
 
   return (
 
-    <div style={{ position: 'relative' }}>
-      <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />
+    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+      <div  style={{position: 'relative', width: '50%', minWidth: '375px' }}>
+        <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />
+      </div>
       <MovesBoard movesArray={movesArray} />
     </div>);
 }

@@ -492,7 +492,7 @@ function App() {
         </div>
       }
 
-      <div className='gameContainer' style={{position: 'relative', width: '35%', minWidth: '375px' }}>
+      <div className='gameContainer' style={{position: 'relative', width: '100%', minWidth: '375px' }}>
         <Game fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
       </div>
 
