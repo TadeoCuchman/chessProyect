@@ -77,7 +77,6 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
         promotion: move.substring(4, 5),
       });
       if (result != null) {
-        console.log(result);
         setLastMove({ from: result.from, to: result.to });
         actualizeMovesArray(`${result.from}${result.to}`, result.color);
         setNewFen(newGame.fen())
@@ -133,8 +132,6 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
       setGame(gameCopy);
 
       if (result != null) {
-        console.log(result);
-
         setLastMove({ from: result.from, to: result.to });
         actualizeMovesArray(`${result.from}${result.to}`, result.color);
       }

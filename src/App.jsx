@@ -99,7 +99,7 @@ function App() {
 
   const transformLichessDataToLevel = (fen, moves) => {
 
-    console.log('>>>>>>>>>>>', moves)
+    // console.log('>>>>>>>>>>>', moves)
     const result = {
       fen: fen,
       validMoves: {},
@@ -107,7 +107,7 @@ function App() {
 
     for (let i = 0; (i < moves.length) && (i < 3); i++) {
       const moveNumber = i + 1;
-      console.log(moveNumber)
+      // console.log(moveNumber)
 
       result.validMoves[moveNumber] = {
         move: handleMove(moves[i].uci),
@@ -115,7 +115,6 @@ function App() {
         cp: '',
       };
     }
-    console.log(result);
     return result;
   };
 
