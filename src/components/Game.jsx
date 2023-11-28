@@ -160,9 +160,9 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
   return (
 
     <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-      <div  style={{position: 'relative', width: '40%', minWidth: '375px' }}>
+      <div  style={{position: 'relative', width: '50%', minWidth: '375px' }}>
         <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />
       </div>
-      <MovesBoard movesArray={movesArray} />
+      {/* <MovesBoard movesArray={movesArray} /> */}
     </div>);
 }
