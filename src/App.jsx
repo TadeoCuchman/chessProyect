@@ -135,7 +135,7 @@ function App() {
         return response.json();
       })
       .then(data => {
-        console.log('LINES BEST PLAYER LICHESS DATA', data.topGames[0].uci);
+        console.log('LINES BEST PLAYER LICHESS DATA', data.topGames[0].uci, data);
         setValidMoves(data.topGames[0].uci);
         updateValidMove(currentLevel - 1, data.topGames[0].uci, null);
       })
