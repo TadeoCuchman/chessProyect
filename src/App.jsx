@@ -1,13 +1,16 @@
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import './App.css'
 import Game from './components/Game.jsx';
 import InfoPopup from './components/InfoPopup.jsx';
+import Engine from "./components/integration/Engine.ts";
+
 
 const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, good: false, afterMoveFen: '' } };
 const initialCounters = { goodMoves: 0, badMoves: 0 };
 
 function App() {
+  const engine = useMemo(() => new Engine(), []);
 
   const [fen, setFen] = useState('');
   const [newFen, setNewFen] = useState('');
@@ -34,6 +37,17 @@ function App() {
 
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
 
+  //engine 
+
+  useEffect(() => {
+    if(levelFen.length > 0) {
+      findEnfgineBestMove(fen);
+    }
+  },[newFen])
+
+
+
+
   // const [currentTurn, setCurrentTurn] = useState('')
   // const [levelLinesMoves, setLevelLinesMoves] = useState('')
 
@@ -54,8 +68,8 @@ function App() {
 
 
   // fetch to players moves
-  const fetchLichessMovesPerFen = (fen) => {
-    const parsedFen = fen.replaceAll(' ', '%20');
+  const fetchLichessMovesPerFen = (fenInterne) => {
+    const parsedFen = fenInterne.replaceAll(' ', '%20');
     fetch(`https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=${rating}&fen=` + parsedFen)
       .then(response => {
         return response.json();
@@ -63,9 +77,9 @@ function App() {
       .then(data => {
         console.log('LINES players LICHESS DATA', data);
         if(data.moves.length > 0){
-          setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fen, data.moves)]);
+          setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fenInterne, data.moves)]);
           setCurrentLevel(currentLevel + 1);
-          setTriggerLineMove({ move: null, fen: fen });
+          setTriggerLineMove({ move: null, fen: fenInterne });
           setLastMove({ from: 'ok', to: 'ok' });
           setBadMovesCounter(0);
           setLinesOk(initialLinesOk);
@@ -75,31 +89,16 @@ function App() {
         } else {
           setValidationButtonText('Ok');
           setCenteredTextTop('There is no more moves in the database.');
-
         }
-
       })
       .catch(error => {
         console.error('Fetch error:', error);
       });
   }
 
-  // const transformLichessDataToLevel = (fen, moves) => {
-  //   const result = {
-  //     fen: fen,
-  //     validMoves: {
-  //       1: { move: handleMove(moves[0].uci ? moves[2].uci : ''), response: '', cp: '' },
-  //       2: { move: handleMove(moves[1].uci ? moves[2].uci : ''), response: '', cp: '' },
-  //       3: { move: handleMove(moves[2].uci ? moves[2].uci : ''), response: '', cp: '' }
-  //     },
-  //   }
-
-  //   return result;
-  // }
-
   const transformLichessDataToLevel = (fen, moves) => {
 
-    // console.log('>>>>>>>>>>>', moves)
+    console.log('>>>>>>>>>>>', moves)
     const result = {
       fen: fen,
       validMoves: {},
@@ -107,12 +106,10 @@ function App() {
 
     for (let i = 0; (i < moves.length) && (i < 3); i++) {
       const moveNumber = i + 1;
-      // console.log(moveNumber)
 
       result.validMoves[moveNumber] = {
         move: handleMove(moves[i].uci),
         response: '',
-        cp: '',
       };
     }
     return result;
@@ -128,79 +125,109 @@ function App() {
 
 
   // fetch to best players best moves
-  const fetchLichessValidMovesPerFen = (fen) => {
-    const parsedFen = fen.replaceAll(' ', '%20');
-    fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=2500&fen=' + parsedFen)
-      .then(response => {
-        return response.json();
-      })
-      .then(data => {
-        console.log('LINES BEST PLAYER LICHESS DATA', data.topGames[0].uci, data);
-        setValidMoves(data.topGames[0].uci);
-        updateValidMove(currentLevel - 1, data.topGames[0].uci, null);
-      })
-      .catch(error => {
-        console.error('Fetch error:', error);
-      });
-  }
+  // const fetchLichessValidMovesPerFen = (fen) => {
+  //   const parsedFen = fen.replaceAll(' ', '%20');
+  //   fetch('https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=2500&fen=' + parsedFen)
+  //     .then(response => {
+  //       return response.json();
+  //     })
+  //     .then(data => {
+  //       console.log('LINES BEST PLAYER LICHESS DATA', data.topGames[0].uci, data);
+  //       setValidMoves(data.topGames[0].uci);
+  //       updateValidMove(currentLevel - 1, data.topGames[0].uci);
+  //     })
+  //     .catch(error => {
+  //       console.error('Fetch error:', error);
+  //     });
+  // }
 
   // fetch to analysis
-  const fetchLichessValidMoves = (fen) => {
-    const parsedFen = fen.replaceAll(' ', '%20');
-    fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
-      .then(response => {
-        return response.json();
-      })
-      .then(result => {
-        const data = result;
-        console.log('analysis data',data)
-        if (result.error == 'Not found') {
-          fetchLichessValidMovesPerFen(fen)
-        } else {
-          const pvs = separatePvs(data.pvs);
-          setValidMoves(pvs[0].moves[0]);
-          updateValidMove(currentLevel - 1, pvs[0].moves[0], pvs[0].cp);
-        }
-      })
-      .catch(error => {
-        console.error('Fetch error:', error);
-      });
-  }
+  // const fetchLichessValidMoves = (fen) => {
+  //   const parsedFen = fen.replaceAll(' ', '%20');
+  //   fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
+  //     .then(response => {
+  //       return response.json();
+  //     })
+  //     .then(result => {
+  //       const data = result;
+  //       console.log('analysis data',data)
+  //       if (result.error == 'Not found') {
+  //         fetchLichessValidMovesPerFen(fen)
+  //       } else {
+  //         const pvs = separatePvs(data.pvs);
+  //         let manyValidMoves = pvs.map(moves => moves.moves[0]);
+  //         let manyValidMovesWithCps = pvs.map(moves => {return { move: moves.moves[0], cp: moves.cp}})
+  //         console.log('>>>>>>>>>>>', manyValidMovesWithCps)
+  //         setValidMoves(manyValidMoves);
+  //         updateValidMove(currentLevel - 1, manyValidMovesWithCps);
+  //       }
+  //     })
+  //     .catch(error => {
+  //       console.error('Fetch error:', error);
+  //     });
+  // }
 
-
-  function updateValidMove(index, response, cp) {
-    setLevelFen((prev) => {
-      const newData = [...prev];
-      const validMoves = { ...newData[index].validMoves };
-
-      for (const key in validMoves) {
-        if (!linesOk[key].answer) {
-          if (validMoves.hasOwnProperty(key)) {
-            validMoves[key].response = response;
-            validMoves[key].cp = cp;
+  function findEnfgineBestMove(fen) {
+    engine.evaluatePosition(fen, 10);
+    setTimeout(() =>{ 
+      const validMoveInternal = engine.getLastValidMove();
+      console.log(validMoveInternal)
+      setLevelFen((prev) => {
+        const newData = [...prev];
+        console.log(newData)
+        const validMoves = { ...newData[currentLevel - 1].validMoves };
+        for (const key in validMoves) {
+          if (!linesOk[key].answer) {
+            if (validMoves.hasOwnProperty(key)) {
+              validMoves[key].response = {move: validMoveInternal.move, cp: validMoveInternal.cp};
+            }
           }
         }
-      }
+        setValidMoves(validMoveInternal.move);
 
-      newData[index].validMoves = validMoves;
-      return newData;
-    });
+  
+        newData[currentLevel - 1].validMoves = validMoves;
+        console.log(newData);
+        return newData;
+      });
+    },500)
+
+     
+   
   }
 
-  function separatePvs(pvs) {
-    return pvs.map((pv) => ({
-      moves: pv.moves.split(' ').map((move) => handleMove(move)),
-      cp: pv.cp
-    }));
-  }
+  // function updateValidMove(index, responseWithCps) {
 
+  //   setLevelFen((prev) => {
+  //     const newData = [...prev];
+  //     const validMoves = { ...newData[index].validMoves };
 
+  //     for (const key in validMoves) {
+  //       if (!linesOk[key].answer) {
+  //         if (validMoves.hasOwnProperty(key)) {
+  //           validMoves[key].response = responseWithCps;
+  //         }
+  //       }
+  //     }
 
-  useEffect(() => {
-    if (newFen != '') {
-      fetchLichessValidMoves(newFen);
-    }
-  }, [newFen])
+  //     newData[index].validMoves = validMoves;
+  //     console.log(newData);
+  //     return newData;
+  //   });
+  // }
+
+  // function separatePvs(pvs) {
+  //   return pvs.map((pv) => ({
+  //     moves: pv.moves.split(' ').map((move) => handleMove(move)),
+  //     cp: pv.cp
+  //   }));
+  // }
+
+  // useEffect(() => {
+  //   if (newFen != '') {
+  //     fetchLichessValidMoves(newFen);
+  //   }
+  // }, [newFen])
 
   //show the correct moves when the popup displays
   useEffect(() => {
@@ -447,24 +474,27 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
-                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[1].cp)}</span>
+                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.cp : '?'}</span>
                   <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
-                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response : '?'} </span>
+                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.move : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
                   fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
+                  setTimeout(() => {
+                    findEnfgineBestMove(fen)
+                  }, 400);
                 }}> Continue </button> : ''}
 
             </div>
 
             <div style={{ position: 'relative' }}>
-              {linesOk[2].checked ?
+              {linesOk[2].checked ? 
                 <>
-                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[2].cp)}</span>
+                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[2].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
-                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response : '?'} </span>
+                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.move : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
@@ -476,9 +506,9 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
-                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[3].cp)}</span>
+                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[3].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
-                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response : '?'} </span>
+                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response.move : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
@@ -491,7 +521,7 @@ function App() {
         </div>
       }
 
-      <div className='gameContainer' style={{position: 'relative', width: '100%', minWidth: '375px', maxWidth: '450px'}}>
+      <div className='gameContainer' style={{position: 'relative', width: '100%', minWidth: '375px', maxWidth: '450px' }}>
         <Game fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
       </div>
 
