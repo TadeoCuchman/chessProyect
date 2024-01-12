@@ -30,6 +30,7 @@ export default class Engine {
   stockfish: Worker;
   onMessage: (callback: (messageData: EngineMessage) => void) => void;
   isReady: boolean;
+  lastValidMove = 'hola';
 
   constructor() {
     this.stockfish = stockfish;
@@ -37,8 +38,10 @@ export default class Engine {
     this.onMessage = (callback) => {
       this.stockfish.addEventListener("message", (e) => {
           const result = this.transformSFMessageData(e)
+          // console.log(result)
           if(result.bestMove){
-            console.log(result.bestMove)
+            // console.log(result.bestMove)
+            this.lastValidMove = result.bestMove;
           }
       });
     };
@@ -82,6 +85,10 @@ export default class Engine {
 
     this.stockfish.postMessage(`position fen ${fen}`);
     this.stockfish.postMessage(`go depth ${depth}`);
+  }
+
+  getLastValidMove() {
+    return this.lastValidMove
   }
 
   stop() {

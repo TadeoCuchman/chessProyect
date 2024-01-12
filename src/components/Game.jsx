@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 // import Engine from "./integration/Engine.ts";
@@ -16,6 +16,12 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     setFen(game.fen())
   }, [])
 
+
+  //use engine
+  // useEffect(() => {
+  //   findEnfgineBestMove()
+  // }, [game])
+  
   useEffect(() => {
     if (triggerLineMove != null) {
       makeaButtonMove(triggerLineMove.move, triggerLineMove.fen)
@@ -40,7 +46,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     }
   }, [triggerValidationMove])
 
-  // function findBestMove() {
+  // function findEnfgineBestMove() {
   //   engine.evaluatePosition(game.fen(), 10);
   //   engine.onMessage(({ bestMove }) => {
   //     if (bestMove) {
@@ -49,8 +55,6 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
   //         to: bestMove.substring(2, 4),
   //         promotion: bestMove.substring(4, 5),
   //       });
-
-  //       setChessBoardPosition(game.fen());
   //     }
   //   });
   // }
@@ -76,13 +80,14 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
         to: move.substring(2, 4),
         promotion: move.substring(4, 5),
       });
+
       if (result != null) {
         setLastMove({ from: result.from, to: result.to });
-        actualizeMovesArray(`${result.from}${result.to}`, result.color);
+        updateMovesArray(`${result.from}${result.to}`, result.color);
         setNewFen(newGame.fen())
       }
     }
-
+    console.log('ddalepa', newGame.fen());
     setFen(newGame.fen())
     setGame(newGame);
     // console.log('>>>>>>>>>>>', newGame.fen())
@@ -133,7 +138,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
       if (result != null) {
         setLastMove({ from: result.from, to: result.to });
-        actualizeMovesArray(`${result.from}${result.to}`, result.color);
+        updateMovesArray(`${result.from}${result.to}`, result.color);
       }
 
       return result; // null if the move was illegal, the move object if the move was legal
@@ -152,7 +157,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     return true;
   }
   
-  const actualizeMovesArray = (move, color)  => {
+  const updateMovesArray = (move, color)  => {
     const infoMove = {move: move, turn: color};
     setMovesArray([...movesArray, infoMove])
   };
@@ -160,7 +165,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
   return (
 
     <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-      <div  style={{position: 'relative', width: '50%', minWidth: '375px' }}>
+      <div  style={{position: 'relative', width: '30%', minWidth: '375px' }}>
         <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />
       </div>
       {/* <MovesBoard movesArray={movesArray} /> */}
