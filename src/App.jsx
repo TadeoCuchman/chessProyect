@@ -168,22 +168,23 @@ function App() {
   // }
 
   function findEnfgineBestMove(fen) {
-    const validMoveInternal = engine.evaluatePosition(fen, 10);
-    console.log(validMoveInternal)
+    engine.evaluatePosition(fen, 10);
     setTimeout(() =>{ 
       const validMoveInternal = engine.getLastValidMove();
+      console.log(validMoveInternal)
       setLevelFen((prev) => {
         const newData = [...prev];
         console.log(newData)
         const validMoves = { ...newData[currentLevel - 1].validMoves };
-        setValidMoves([validMoveInternal]);
         for (const key in validMoves) {
           if (!linesOk[key].answer) {
             if (validMoves.hasOwnProperty(key)) {
-              validMoves[key].response = {move: validMoveInternal, cp: '2'};
+              validMoves[key].response = {move: validMoveInternal.move, cp: validMoveInternal.cp};
             }
           }
         }
+        setValidMoves(validMoveInternal.move);
+
   
         newData[currentLevel - 1].validMoves = validMoves;
         console.log(newData);
@@ -432,10 +433,6 @@ function App() {
                 if (line > 0) {
                   setValidMoves(levelFen[currentLevel - 1].validMoves[line].response)
                   setTriggerLineMove({ move: levelFen[currentLevel - 1].validMoves[line].move, fen: levelFen[currentLevel - 1].fen })
-                  // setTimeout(() => {
-                  //   console.log('fen',newFen); 
-                  //   findEnfgineBestMove(newFen)
-                  // }, 600);
                 }
                 setLinesOk(updatedLinesOk);
                 setCenteredTextTop('This is one of the most common moves that black plays in this position.')
@@ -477,14 +474,14 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
-                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[1].cp)}</span>
+                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.cp : '?'}</span>
                   <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
-                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response : '?'} </span>
+                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.move : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
-                  // fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
+                  fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                   setTimeout(() => {
                     findEnfgineBestMove(fen)
                   }, 400);
@@ -493,30 +490,30 @@ function App() {
             </div>
 
             <div style={{ position: 'relative' }}>
-              {linesOk[2].checked ?
+              {linesOk[2].checked ? 
                 <>
-                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[2].cp)}</span>
+                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[2].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
-                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response : '?'} </span>
+                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.move : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[2].moves ? levelFen[currentLevel - 1].validMoves[2].moves : ''} onClick={() => {
-                  // fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
+                  fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
                 }}> Continue </button> : ''}
             </div>
 
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
-                  <span>Cp:  {(levelFen[currentLevel - 1].validMoves[3].cp)}</span>
+                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[3].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
-                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response : '?'} </span>
+                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response.move : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[3].moves ? levelFen[currentLevel - 1].validMoves[3].moves : ''} onClick={() => {
-                  // fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
+                  fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
                 }}> Continue </button> : ''}
             </div>
           </div>

@@ -30,17 +30,22 @@ export default class Engine {
   stockfish: Worker;
   onMessage: (callback: (messageData: EngineMessage) => void) => void;
   isReady: boolean;
-  lastValidMove = 'hola';
+  lastValidMove = '';
+  lastCp = 0;
 
   constructor() {
     this.stockfish = stockfish;
     this.isReady = false;
     this.onMessage = (callback) => {
       this.stockfish.addEventListener("message", (e) => {
-          const result = this.transformSFMessageData(e)
-          // console.log(result)
+        // console.log(e);
+        const result = this.transformSFMessageData(e)
+        // console.log(result)
+          if(result.depth == 10){
+            this.lastCp = result.cp
+          }
           if(result.bestMove){
-            // console.log(result.bestMove)
+            console.log('ENGINEEE BEST MOVE', result.bestMove)
             this.lastValidMove = result.bestMove;
           }
       });
@@ -59,6 +64,7 @@ export default class Engine {
       possibleMate: uciMessage.match(/mate\s+(\S+)/)?.[1],
       pv: uciMessage.match(/ pv\s+(.*)/)?.[1],
       depth: Number(uciMessage.match(/ depth\s+(\S+)/)?.[1]) ?? 0,
+      cp: Number(uciMessage.match(/ cp\s+(\S+)/)?.[1]) ?? 0
     };
   }
 
@@ -88,7 +94,7 @@ export default class Engine {
   }
 
   getLastValidMove() {
-    return this.lastValidMove
+    return {move: this.lastValidMove, cp: this.lastCp};
   }
 
   stop() {
