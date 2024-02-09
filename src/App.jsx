@@ -479,7 +479,7 @@ function App() {
                   <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.move : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
-              {linesOk[3].good ?
+              {linesOk[1].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
                   fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                   setTimeout(() => {
@@ -497,7 +497,7 @@ function App() {
                   <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.move : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
-              {linesOk[3].good ?
+              {linesOk[2].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[2].moves ? levelFen[currentLevel - 1].validMoves[2].moves : ''} onClick={() => {
                   fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
                 }}> Continue </button> : ''}
