@@ -10,7 +10,6 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
   // const engine = useMemo(() => new Engine(), []);
   const [boardOrientation, setBoardOrientation] = useState('white');
   const [movesArray, setMovesArray] = useState([]);
-  // const [turn, setTurn] = useState('w');
 
   useEffect(() => {
     setFen(game.fen())
@@ -32,10 +31,8 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     if (isWhitesMove != null) {
       if (isWhitesMove == true) {
         setBoardOrientation('white')
-        // setTurn('w')
       } else {
         setBoardOrientation('black')
-        // setTurn('b')
       }
     }
   }, [isWhitesMove])

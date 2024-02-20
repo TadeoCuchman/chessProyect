@@ -4,6 +4,7 @@ import './App.css'
 import Game from './components/Game.jsx';
 import InfoPopup from './components/InfoPopup.jsx';
 import Engine from "./components/integration/Engine.ts";
+import MovesBoard from './components/MovesBorad.jsx';
 
 
 const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, good: false, afterMoveFen: '' } };
@@ -20,6 +21,7 @@ function App() {
   const [currentLevel, setCurrentLevel] = useState(0);
   const [error, setError] = useState('');
   const [moveMessage, setMoveMessage] = useState('');
+  const [movesArray, setMovesArray] = useState([]);
   const [triggerLineMove, setTriggerLineMove] = useState(null);
   const [triggerValidationMove, setTriggerValidationMove] = useState(false);
   const [linesOk, setLinesOk] = useState(initialLinesOk);
@@ -28,12 +30,12 @@ function App() {
   const [lastMove, setLastMove] = useState({ from: '', to: '' });
   const [beforeMoveStyles, setBeforeMoveStyles] = useState({ from: { square: '', color: '' }, to: { square: '', color: '' } })
 
+  const [isWhitesMove, setIsWhitesMove] = useState(true);
   const [showOppeningsTable, setShowOppeningsTable] = useState(true);
-  const [centeredTextTop, setCenteredTextTop] = useState('Click "Next Variation" to see black’s most common move');
+  const [centeredTextTop, setCenteredTextTop] = useState(`Click "Next Variation" to see ${isWhitesMove ? "Black's" : "Whites"} most common move`);
   const [centeredTextBot, setCenteredTextBot] = useState('');
   const [validationButtonText, setValidationButtonText] = useState('Next Variation');
   const [validationDisable, setValidationDisable] = useState(false);
-  const [isWhitesMove, setIsWhitesMove] = useState(true);
 
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
 
@@ -44,27 +46,6 @@ function App() {
       findEnfgineBestMove(fen);
     }
   },[newFen])
-
-
-
-
-  // const [currentTurn, setCurrentTurn] = useState('')
-  // const [levelLinesMoves, setLevelLinesMoves] = useState('')
-
-
-  // makes that the one who is currently playing make the move first
-  // useEffect(() => {
-  //   const firstFen = levelFen[currentLevel + 1].fen
-  //   setLevelLinesMoves(firstFen.split(' ')[1])
-  // },[currentLevel])
-
-  // useEffect(() => {
-  //   if(fen != ''){
-  //     const orientation = fen.split(' ')[1];
-  //     setCurrentTurn(orientation);
-  //   }
-  // },[fen])
-
 
 
   // fetch to players moves
@@ -83,7 +64,7 @@ function App() {
           setLastMove({ from: 'ok', to: 'ok' });
           setBadMovesCounter(0);
           setLinesOk(initialLinesOk);
-          setCenteredTextTop('Click "Next Variation" to see black’s most common move');
+          setCenteredTextTop(`Click "Next Variation" to see  ${isWhitesMove ? "Black's" : "Whites"} most common move`);
           setValidationButtonText('Next Variation');
           setValidationDisable(false);
         } else {
@@ -190,7 +171,7 @@ function App() {
         console.log(newData);
         return newData;
       });
-    },500)
+    },1000)
 
      
    
@@ -283,7 +264,7 @@ function App() {
       setCounters({ ...counters, goodMoves: counters.goodMoves + 1 });
       if (!updatedLinesOk[3].good) {
         setCenteredTextTop("Congratulations! The move is CORRECT!")
-        setCenteredTextBot("Click “Next Variation” to see the different black’s move")
+        setCenteredTextBot(`Click “Next Variation” to see the different  ${isWhitesMove ? "Black's" : "Whites"} move`)
         setValidationButtonText('Next Variation');
         setValidationDisable(false)
         setBadMovesCounter(0);
@@ -311,7 +292,7 @@ function App() {
         setInfoPopupOpen(true);
       }
       setTimeout(() => {
-        setCenteredTextBot('Guess the best move for white');
+        setCenteredTextBot(`Guess the best move for  ${isWhitesMove ? "Whites" : "Black's"}`);
       }, 700)
     }
   }, [moveMessage]);
@@ -366,7 +347,7 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', textAlign: 'center' }} >
       <h3>LEVEL: {currentLevel}</h3>
-      <h6>Rating: {rating}</h6>
+      <h6 style={{margin: '10px'}}>Rating: {rating}</h6>
       <div style={{ position: 'absolute', top: '20px', width: '100%', display: 'flex', justifyContent: 'space-around' }}>
         <div><span style={{ color: 'green' }}>CORRECT MOVES</span> : {counters.goodMoves} </div>
         <div><span style={{ color: 'red' }}>WRONG MOVES</span> : {counters.badMoves}</div>
@@ -435,7 +416,7 @@ function App() {
                   setTriggerLineMove({ move: levelFen[currentLevel - 1].validMoves[line].move, fen: levelFen[currentLevel - 1].fen })
                 }
                 setLinesOk(updatedLinesOk);
-                setCenteredTextTop('This is one of the most common moves that black plays in this position.')
+                setCenteredTextTop(`This is one of the most common moves that ${isWhitesMove ? "Black's" : "Whites"} plays in this position.`)
                 setCenteredTextBot('Guess the best move for white')
               }
             }}>{validationButtonText}</button>
@@ -481,6 +462,9 @@ function App() {
                 </> : ''}
               {linesOk[1].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
+                  const userMove = {move: lastMove.from + lastMove.to , turn: isWhitesMove ? 'w' : 'b'};
+                  const botMove = {move: levelFen[currentLevel - 1].validMoves[1].move , turn: isWhitesMove ? 'b' : 'w'};
+                  setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                   setTimeout(() => {
                     findEnfgineBestMove(fen)
@@ -527,6 +511,8 @@ function App() {
 
       {error != '' ? <span style={{ position: 'absolute', top: '4%', color: 'red', backgroundColor: 'pink', borderRadius: '5px', padding: '2px', fontSize: '1.5rem' }}>{error}</span> : ''}
       {infoPopupOpen ? <InfoPopup correctMove={validMoves} description='' setInfoPopupOpen={setInfoPopupOpen} /> : ""}
+      <br />
+      <MovesBoard movesArray={movesArray}/>
     </div>
   )
 }
