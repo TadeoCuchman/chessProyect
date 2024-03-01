@@ -42,10 +42,10 @@ function App() {
   //engine 
 
   useEffect(() => {
-    if(levelFen.length > 0) {
+    if (levelFen.length > 0) {
       findEnfgineBestMove(fen);
     }
-  },[newFen])
+  }, [newFen])
 
 
   // fetch to players moves
@@ -57,7 +57,7 @@ function App() {
       })
       .then(data => {
         console.log('LINES players LICHESS DATA', data);
-        if(data.moves.length > 0){
+        if (data.moves.length > 0) {
           setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fenInterne, data.moves)]);
           setCurrentLevel(currentLevel + 1);
           setTriggerLineMove({ move: null, fen: fenInterne });
@@ -150,7 +150,7 @@ function App() {
 
   function findEnfgineBestMove(fen) {
     engine.evaluatePosition(fen, 10);
-    setTimeout(() =>{ 
+    setTimeout(() => {
       const validMoveInternal = engine.getLastValidMove();
       console.log(validMoveInternal)
       setLevelFen((prev) => {
@@ -160,21 +160,21 @@ function App() {
         for (const key in validMoves) {
           if (!linesOk[key].answer) {
             if (validMoves.hasOwnProperty(key)) {
-              validMoves[key].response = {move: validMoveInternal.move, cp: validMoveInternal.cp};
+              validMoves[key].response = { move: validMoveInternal.move, cp: validMoveInternal.cp };
             }
           }
         }
         setValidMoves(validMoveInternal.move);
 
-  
+
         newData[currentLevel - 1].validMoves = validMoves;
         console.log(newData);
         return newData;
       });
-    },1000)
+    }, 1000)
 
-     
-   
+
+
   }
 
   // function updateValidMove(index, responseWithCps) {
@@ -299,9 +299,9 @@ function App() {
 
   //provsory before database
   const chargeGame = (gameName, worb) => {
-    if(worb == 'w'){
+    if (worb == 'w') {
       setIsWhitesMove(true);
-    } else if (worb == 'b'){
+    } else if (worb == 'b') {
       setIsWhitesMove(false);
     }
 
@@ -347,7 +347,7 @@ function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', textAlign: 'center' }} >
       <h3>LEVEL: {currentLevel}</h3>
-      <h6 style={{margin: '10px'}}>Rating: {rating}</h6>
+      <h6 style={{ margin: '10px' }}>Rating: {rating}</h6>
       <div style={{ position: 'absolute', top: '20px', width: '100%', display: 'flex', justifyContent: 'space-around' }}>
         <div><span style={{ color: 'green' }}>CORRECT MOVES</span> : {counters.goodMoves} </div>
         <div><span style={{ color: 'red' }}>WRONG MOVES</span> : {counters.badMoves}</div>
@@ -355,43 +355,43 @@ function App() {
 
 
 
-      {showOppeningsTable ? 
-      <>
-      <select name="levelpicklist" onChange={(e) => setRating(e.target.value)}>
-        <option value="0">0-1000</option>
-        <option value="1000">1000-1200</option>
-        <option value="1200">1200-1400</option>
-        <option value="1400">1400-1600</option>
-        <option value="1600">1600-1800</option>
-        <option value="1800">1800-2000</option>
-        <option value="2000">2000-2200</option>
-        <option value="2500">2200-2500</option>
-      </select>
-      
-      <table>
-          <thead>
-            <tr>
-              <th>WHITE PIECES</th>
-              <th>BLACK PIECES</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><button onClick={() => chargeGame("italian",'w')}>Italian Game</button></td>
-              <td><button onClick={() => chargeGame("sicilian",'b')}>Sicilian Defense</button></td>
-            </tr>
-            <tr>
-              <td><button onClick={() => chargeGame("ruylopez",'w')}>Ruy-Lopez</button></td>
-              <td><button onClick={() => chargeGame("french",'b')}>French Defense</button></td>
-            </tr>
-            <tr>
-              <td><button onClick={() => chargeGame("scoth",'w')}>Scotch Game</button></td>
-              <td><button onClick={() => chargeGame("carokann'b'",)}>Caro-Kann</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </>
-         :
+      {showOppeningsTable ?
+        <>
+          <select name="levelpicklist" onChange={(e) => setRating(e.target.value)}>
+            <option value="0">0-1000</option>
+            <option value="1000">1000-1200</option>
+            <option value="1200">1200-1400</option>
+            <option value="1400">1400-1600</option>
+            <option value="1600">1600-1800</option>
+            <option value="1800">1800-2000</option>
+            <option value="2000">2000-2200</option>
+            <option value="2500">2200-2500</option>
+          </select>
+
+          <table>
+            <thead>
+              <tr>
+                <th>WHITE PIECES</th>
+                <th>BLACK PIECES</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><button onClick={() => chargeGame("italian", 'w')}>Italian Game</button></td>
+                <td><button onClick={() => chargeGame("sicilian", 'b')}>Sicilian Defense</button></td>
+              </tr>
+              <tr>
+                <td><button onClick={() => chargeGame("ruylopez", 'w')}>Ruy-Lopez</button></td>
+                <td><button onClick={() => chargeGame("french", 'b')}>French Defense</button></td>
+              </tr>
+              <tr>
+                <td><button onClick={() => chargeGame("scoth", 'w')}>Scotch Game</button></td>
+                <td><button onClick={() => chargeGame("carokann", 'b')}>Caro-Kann</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </>
+        :
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }} >
           <span>{centeredTextTop}</span>
@@ -462,8 +462,8 @@ function App() {
                 </> : ''}
               {linesOk[1].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
-                  const userMove = {move: lastMove.from + lastMove.to , turn: isWhitesMove ? 'w' : 'b'};
-                  const botMove = {move: levelFen[currentLevel - 1].validMoves[1].move , turn: isWhitesMove ? 'b' : 'w'};
+                  const userMove = { move: levelFen[currentLevel - 1].validMoves[1].response.move, turn: isWhitesMove ? 'w' : 'b' };
+                  const botMove = { move: levelFen[currentLevel - 1].validMoves[1].move, turn: isWhitesMove ? 'b' : 'w' };
                   setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                   setTimeout(() => {
@@ -474,7 +474,7 @@ function App() {
             </div>
 
             <div style={{ position: 'relative' }}>
-              {linesOk[2].checked ? 
+              {linesOk[2].checked ?
                 <>
                   <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[2].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
@@ -483,7 +483,13 @@ function App() {
                 </> : ''}
               {linesOk[2].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[2].moves ? levelFen[currentLevel - 1].validMoves[2].moves : ''} onClick={() => {
+                  const userMove = { move: levelFen[currentLevel - 1].validMoves[2].response.move, turn: isWhitesMove ? 'w' : 'b' };
+                  const botMove = { move: levelFen[currentLevel - 1].validMoves[2].move, turn: isWhitesMove ? 'b' : 'w' };
+                  setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
+                  setTimeout(() => {
+                    findEnfgineBestMove(fen)
+                  }, 400);
                 }}> Continue </button> : ''}
             </div>
 
@@ -497,7 +503,13 @@ function App() {
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[3].moves ? levelFen[currentLevel - 1].validMoves[3].moves : ''} onClick={() => {
+                  const userMove = { move: levelFen[currentLevel - 1].validMoves[3].response.move, turn: isWhitesMove ? 'w' : 'b' };
+                  const botMove = { move: levelFen[currentLevel - 1].validMoves[3].move, turn: isWhitesMove ? 'b' : 'w' };
+                  setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
+                  setTimeout(() => {
+                    findEnfgineBestMove(fen)
+                  }, 400);
                 }}> Continue </button> : ''}
             </div>
           </div>
@@ -505,14 +517,14 @@ function App() {
         </div>
       }
 
-      <div className='gameContainer' style={{position: 'relative', width: '100%', minWidth: '375px', maxWidth: '450px' }}>
-        <Game fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove}/>
+      <div className='gameContainer' style={{ position: 'relative', width: '100%', minWidth: '375px', maxWidth: '450px' }}>
+        <Game fen={fen} setFen={setFen} setLastMove={setLastMove} setError={setError} validMoves={validMoves} setValidMoves={setValidMoves} setMoveMessage={setMoveMessage} triggerLineMove={triggerLineMove} triggerValidationMove={triggerValidationMove} setNewFen={setNewFen} isWhitesMove={isWhitesMove} />
       </div>
 
       {error != '' ? <span style={{ position: 'absolute', top: '4%', color: 'red', backgroundColor: 'pink', borderRadius: '5px', padding: '2px', fontSize: '1.5rem' }}>{error}</span> : ''}
       {infoPopupOpen ? <InfoPopup correctMove={validMoves} description='' setInfoPopupOpen={setInfoPopupOpen} /> : ""}
       <br />
-      <MovesBoard movesArray={movesArray}/>
+      <MovesBoard movesArray={movesArray} />
     </div>
   )
 }

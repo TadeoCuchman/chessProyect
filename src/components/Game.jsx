@@ -18,9 +18,9 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
   //use engine
   // useEffect(() => {
-  //   findEnfgineBestMove()
+  //   findEngineBestMove()
   // }, [game])
-  
+
   useEffect(() => {
     if (triggerLineMove != null) {
       makeaButtonMove(triggerLineMove.move, triggerLineMove.fen)
@@ -43,7 +43,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
     }
   }, [triggerValidationMove])
 
-  // function findEnfgineBestMove() {
+  // function findEngineBestMove() {
   //   engine.evaluatePosition(game.fen(), 10);
   //   engine.onMessage(({ bestMove }) => {
   //     if (bestMove) {
@@ -153,16 +153,16 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
     return true;
   }
-  
-  const updateMovesArray = (move, color)  => {
-    const infoMove = {move: move, turn: color};
+
+  const updateMovesArray = (move, color) => {
+    const infoMove = { move: move, turn: color };
     setMovesArray([...movesArray, infoMove])
   };
 
   return (
 
     <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-      <div  style={{position: 'relative', width: '30%', minWidth: '375px' }}>
+      <div style={{ position: 'relative', width: '30%', minWidth: '375px' }}>
         <Chessboard position={fen} boardOrientation={boardOrientation} customDropSquareStyle={{ backgroundColor: '#FFFFCC' }} onPieceDrop={onDrop} />
       </div>
       {/* <MovesBoard movesArray={movesArray} /> */}
