@@ -20,7 +20,7 @@ function App() {
   const [validMoves, setValidMoves] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [error, setError] = useState('');
-  const [moveMessage, setMoveMessage] = useState('');
+  const [moveMessage, setMoveMessage] = useState({ message: '', san: '' });
   const [movesArray, setMovesArray] = useState([]);
   const [triggerLineMove, setTriggerLineMove] = useState(null);
   const [triggerValidationMove, setTriggerValidationMove] = useState(false);
@@ -91,6 +91,7 @@ function App() {
       result.validMoves[moveNumber] = {
         move: handleMove(moves[i].uci),
         response: '',
+        moveSan: handleMove(moves[i].san),
       };
     }
     return result;
@@ -152,10 +153,9 @@ function App() {
     engine.evaluatePosition(fen, 10);
     setTimeout(() => {
       const validMoveInternal = engine.getLastValidMove();
-      console.log(validMoveInternal)
+      // console.log(validMoveInternal)
       setLevelFen((prev) => {
         const newData = [...prev];
-        console.log(newData)
         const validMoves = { ...newData[currentLevel - 1].validMoves };
         for (const key in validMoves) {
           if (!linesOk[key].answer) {
@@ -168,7 +168,6 @@ function App() {
 
 
         newData[currentLevel - 1].validMoves = validMoves;
-        console.log(newData);
         return newData;
       });
     }, 1000)
@@ -235,10 +234,10 @@ function App() {
 
         setBeforeMoveStyles({ from: { square: lastMove.from, color: fromSquare.style.backgroundColor }, to: { square: lastMove.to, color: toSquare.style.backgroundColor } });
 
-        if (moveMessage == 'NO' && triggerValidationMove == true) {
+        if (moveMessage.message == 'NO' && triggerValidationMove == true) {
           fromSquare.style.backgroundColor = 'green'
           toSquare.style.backgroundColor = 'green'
-        } else if (moveMessage == 'NO') {
+        } else if (moveMessage.message == 'NO') {
           fromSquare.style.backgroundColor = 'red'
           toSquare.style.backgroundColor = 'red'
         } else {
@@ -251,7 +250,7 @@ function App() {
 
   // makes the validations of the moves and correct moves counters
   useEffect(() => {
-    if (moveMessage === 'OK') {
+    if (moveMessage.message === 'OK') {
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
@@ -262,6 +261,21 @@ function App() {
       }
       setLinesOk(updatedLinesOk);
       setCounters({ ...counters, goodMoves: counters.goodMoves + 1 });
+      setLevelFen((prev) => {
+        const newData = [...prev];
+        console.log(newData)
+        const validMoves = { ...newData[currentLevel - 1].validMoves };
+        for (const key in validMoves) {
+          if (!linesOk[key].answer.moveSan) {
+            if (validMoves.hasOwnProperty(key)) {
+              validMoves[key].response.moveSan = moveMessage.san;
+            }
+          }
+        }
+        newData[currentLevel - 1].validMoves = validMoves;
+        console.log(newData);
+        return newData;
+      })
       if (!updatedLinesOk[3].good) {
         setCenteredTextTop("Congratulations! The move is CORRECT!")
         setCenteredTextBot(`Click “Next Variation” to see the different  ${isWhitesMove ? "Black's" : "Whites"} move`)
@@ -272,7 +286,7 @@ function App() {
         levelPassed();
       }
 
-    } else if (moveMessage === 'NO') {
+    } else if (moveMessage.message === 'NO') {
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
         if (updatedLinesOk.hasOwnProperty(key)) {
@@ -455,15 +469,16 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
+                  {console.log('giveeee', levelFen)}
                   <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.cp : '?'}</span>
-                  <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].move}</span>
-                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.move : '?'} </span>
+                  <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].moveSan}</span>
+                  <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.moveSan : '?'} </span>
                   <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[1].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
-                  const userMove = { move: levelFen[currentLevel - 1].validMoves[1].response.move, turn: isWhitesMove ? 'w' : 'b' };
-                  const botMove = { move: levelFen[currentLevel - 1].validMoves[1].move, turn: isWhitesMove ? 'b' : 'w' };
+                  const userMove = { move: levelFen[currentLevel - 1].validMoves[1].response.moveSan, turn: isWhitesMove ? 'w' : 'b' };
+                  const botMove = { move: levelFen[currentLevel - 1].validMoves[1].moveSan, turn: isWhitesMove ? 'b' : 'w' };
                   setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
                   setTimeout(() => {
@@ -477,14 +492,14 @@ function App() {
               {linesOk[2].checked ?
                 <>
                   <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[2].response.cp : '?'}</span>
-                  <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].move}</span>
-                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.move : '?'} </span>
+                  <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].moveSan}</span>
+                  <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.moveSan : '?'} </span>
                   <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[2].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[2].moves ? levelFen[currentLevel - 1].validMoves[2].moves : ''} onClick={() => {
-                  const userMove = { move: levelFen[currentLevel - 1].validMoves[2].response.move, turn: isWhitesMove ? 'w' : 'b' };
-                  const botMove = { move: levelFen[currentLevel - 1].validMoves[2].move, turn: isWhitesMove ? 'b' : 'w' };
+                  const userMove = { move: levelFen[currentLevel - 1].validMoves[2].response.moveSan, turn: isWhitesMove ? 'w' : 'b' };
+                  const botMove = { move: levelFen[currentLevel - 1].validMoves[2].moveSan, turn: isWhitesMove ? 'b' : 'w' };
                   setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
                   setTimeout(() => {
@@ -497,14 +512,14 @@ function App() {
               {linesOk[3].checked ?
                 <>
                   <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[3].response.cp : '?'}</span>
-                  <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].move}</span>
-                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response.move : '?'} </span>
+                  <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].moveSan}</span>
+                  <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response.moveSan : '?'} </span>
                   <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[3].moves ? levelFen[currentLevel - 1].validMoves[3].moves : ''} onClick={() => {
-                  const userMove = { move: levelFen[currentLevel - 1].validMoves[3].response.move, turn: isWhitesMove ? 'w' : 'b' };
-                  const botMove = { move: levelFen[currentLevel - 1].validMoves[3].move, turn: isWhitesMove ? 'b' : 'w' };
+                  const userMove = { move: levelFen[currentLevel - 1].validMoves[3].response.moveSan, turn: isWhitesMove ? 'w' : 'b' };
+                  const botMove = { move: levelFen[currentLevel - 1].validMoves[3].moveSan, turn: isWhitesMove ? 'b' : 'w' };
                   setMovesArray([...movesArray, botMove, userMove])
                   fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
                   setTimeout(() => {

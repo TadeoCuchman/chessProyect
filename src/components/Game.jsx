@@ -84,7 +84,7 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
         setNewFen(newGame.fen())
       }
     }
-    console.log('ddalepa', newGame.fen());
+    // console.log('ddalepa', newGame.fen());
     setFen(newGame.fen())
     setGame(newGame);
     // console.log('>>>>>>>>>>>', newGame.fen())
@@ -116,16 +116,16 @@ export default function Game({ fen, setFen, setLastMove, setError, validMoves, s
 
 
       if (validMoves != null && result != null && ((result?.to == validMoves?.to && result?.from == validMoves?.from) || (result?.to == validMoves) || (result?.san == validMoves) || (result?.from == validMoves.substring(0, 2) && result?.to == validMoves.substring(2, 4)))) {
-        setMoveMessage('OK')
+        setMoveMessage({ message: 'OK', san: result.san });
         setTimeout(() => {
           setValidMoves(null)
-          setMoveMessage('')
+          setMoveMessage({ message: '', san: '' })
         }, 400)
       } else if (validMoves != null) {
-        setMoveMessage('NO')
+        setMoveMessage({ message: 'NO', san: '' })
         gameCopy.undo(move);
         setTimeout(() => {
-          setMoveMessage('')
+          setMoveMessage({ message: '', san: '' })
         }, 400)
       }
 
