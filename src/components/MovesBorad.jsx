@@ -10,7 +10,17 @@ const MovesBoard = ({ movesArray }) => {
 
   return (
     <div style={{ width: '100px', padding: '10px', height: '200px', backgroundColor: 'grey', overflow: 'auto' }}>
-      {movesArray.map((move, index) => (<div key={index} style={move.turn == 'w' ? { color: 'white' } : { color: 'black' }}>{move.move}</div>))}
+      {movesArray.map((move, index) => (
+        <div key={index}>
+          {index} .
+          <span style={move.botMove.turn == 'w' ? { color: 'white' } : { color: 'black' }} className="moveDisplayed">
+            {move.botMove.move}
+          </span>
+          -
+          <span style={move.userMove.turn == 'w' ? { color: 'white' } : { color: 'black' }} className="moveDisplayed">
+            {move.userMove.move}
+          </span>
+        </div>))}
       <div ref={bottomRef} />
     </div>
   )

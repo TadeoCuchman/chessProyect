@@ -7,8 +7,38 @@ import Engine from "./components/integration/Engine.ts";
 import MovesBoard from './components/MovesBorad.jsx';
 
 
-const initialLinesOk = { 1: { checked: false, answer: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, good: false, afterMoveFen: '' } };
+const initialLinesOk = { 1: { checked: false, answer: false, failed: false, good: false, afterMoveFen: '' }, 2: { checked: false, answer: false, failed: false, good: false, afterMoveFen: '' }, 3: { checked: false, answer: false, failed: false, good: false, afterMoveFen: '' } };
 const initialCounters = { goodMoves: 0, badMoves: 0 };
+// const initialLevelFen = {
+//   fen: "",
+//   validMoves: {
+//     1: {
+//       move: "",
+//       moveSan: "",
+//       response: {
+//         move: "",
+//         cp: 0
+//       }
+//     },
+//     2: {
+//       move: "",
+//       moveSan: "",
+//       response: {
+//         move: "",
+//         cp: 0
+//       }
+//     },
+//     3: {
+//       move: "",
+//       moveSan: "",
+//       response: {
+//         move: "",
+//         cp: 0
+//       }
+//     }
+//   }
+// };
+
 
 function App() {
   const engine = useMemo(() => new Engine(), []);
@@ -49,7 +79,7 @@ function App() {
 
 
   // fetch to players moves
-  const fetchLichessMovesPerFen = (fenInterne) => {
+  const fetchLichessMoves = (fenInterne) => {
     const parsedFen = fenInterne.replaceAll(' ', '%20');
     fetch(`https://explorer.lichess.ovh/lichess?variant=standard&speeds=rapid&ratings=${rating}&fen=` + parsedFen)
       .then(response => {
@@ -58,7 +88,7 @@ function App() {
       .then(data => {
         console.log('LINES players LICHESS DATA', data);
         if (data.moves.length > 0) {
-          setLevelFen(prevVal => [...prevVal, transformLichessDataToLevel(fenInterne, data.moves)]);
+          setLevelFen((prev) => [...prev, transformLichessDataToLevel(fenInterne, data.moves)]);
           setCurrentLevel(currentLevel + 1);
           setTriggerLineMove({ move: null, fen: fenInterne });
           setLastMove({ from: 'ok', to: 'ok' });
@@ -79,7 +109,7 @@ function App() {
 
   const transformLichessDataToLevel = (fen, moves) => {
 
-    console.log('>>>>>>>>>>>', moves)
+    // console.log('>>>>>>>>>>>', moves)
     const result = {
       fen: fen,
       validMoves: {},
@@ -90,7 +120,10 @@ function App() {
 
       result.validMoves[moveNumber] = {
         move: handleMove(moves[i].uci),
-        response: '',
+        response: {
+          move: "",
+          cp: 0
+        },
         moveSan: handleMove(moves[i].san),
       };
     }
@@ -122,31 +155,6 @@ function App() {
   //       console.error('Fetch error:', error);
   //     });
   // }
-
-  // fetch to analysis
-  // const fetchLichessValidMoves = (fen) => {
-  //   const parsedFen = fen.replaceAll(' ', '%20');
-  //   fetch('https://lichess.org/api/cloud-eval?multiPv=3&fen=' + parsedFen)
-  //     .then(response => {
-  //       return response.json();
-  //     })
-  //     .then(result => {
-  //       const data = result;
-  //       console.log('analysis data',data)
-  //       if (result.error == 'Not found') {
-  //         fetchLichessValidMovesPerFen(fen)
-  //       } else {
-  //         const pvs = separatePvs(data.pvs);
-  //         let manyValidMoves = pvs.map(moves => moves.moves[0]);
-  //         let manyValidMovesWithCps = pvs.map(moves => {return { move: moves.moves[0], cp: moves.cp}})
-  //         console.log('>>>>>>>>>>>', manyValidMovesWithCps)
-  //         setValidMoves(manyValidMoves);
-  //         updateValidMove(currentLevel - 1, manyValidMovesWithCps);
-  //       }
-  //     })
-  //     .catch(error => {
-  //       console.error('Fetch error:', error);
-  //     });
   // }
 
   function findEnfgineBestMove(fen) {
@@ -158,10 +166,8 @@ function App() {
         const newData = [...prev];
         const validMoves = { ...newData[currentLevel - 1].validMoves };
         for (const key in validMoves) {
-          if (!linesOk[key].answer) {
-            if (validMoves.hasOwnProperty(key)) {
-              validMoves[key].response = { move: validMoveInternal.move, cp: validMoveInternal.cp };
-            }
+          if (!linesOk[key].answer && linesOk[key].checked) {
+            validMoves[key].response = { move: validMoveInternal.move, cp: validMoveInternal.cp };
           }
         }
         setValidMoves(validMoveInternal.move);
@@ -170,44 +176,21 @@ function App() {
         newData[currentLevel - 1].validMoves = validMoves;
         return newData;
       });
+
+      setLinesOk((prev) => {
+        const updatedLinesOk = { ...prev };
+        for (const key in updatedLinesOk) {
+          if (updatedLinesOk[key].checked === true && !updatedLinesOk[key].answer) {
+            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, failed: false, good: false, afterMoveFen: fen }
+          }
+        }
+        return updatedLinesOk;
+      });
     }, 1000)
 
 
 
   }
-
-  // function updateValidMove(index, responseWithCps) {
-
-  //   setLevelFen((prev) => {
-  //     const newData = [...prev];
-  //     const validMoves = { ...newData[index].validMoves };
-
-  //     for (const key in validMoves) {
-  //       if (!linesOk[key].answer) {
-  //         if (validMoves.hasOwnProperty(key)) {
-  //           validMoves[key].response = responseWithCps;
-  //         }
-  //       }
-  //     }
-
-  //     newData[index].validMoves = validMoves;
-  //     console.log(newData);
-  //     return newData;
-  //   });
-  // }
-
-  // function separatePvs(pvs) {
-  //   return pvs.map((pv) => ({
-  //     moves: pv.moves.split(' ').map((move) => handleMove(move)),
-  //     cp: pv.cp
-  //   }));
-  // }
-
-  // useEffect(() => {
-  //   if (newFen != '') {
-  //     fetchLichessValidMoves(newFen);
-  //   }
-  // }, [newFen])
 
   //show the correct moves when the popup displays
   useEffect(() => {
@@ -253,27 +236,22 @@ function App() {
     if (moveMessage.message === 'OK') {
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
-        if (updatedLinesOk.hasOwnProperty(key)) {
-          if (updatedLinesOk[key].checked === true && updatedLinesOk[key].afterMoveFen == '') {
-            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: true, afterMoveFen: fen }
-          }
+        if (updatedLinesOk[key].checked === true && !updatedLinesOk[key].afterMoveFen == '') {
+          updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, failed: false, good: true, afterMoveFen: fen }
         }
+
       }
       setLinesOk(updatedLinesOk);
       setCounters({ ...counters, goodMoves: counters.goodMoves + 1 });
       setLevelFen((prev) => {
         const newData = [...prev];
-        console.log(newData)
         const validMoves = { ...newData[currentLevel - 1].validMoves };
         for (const key in validMoves) {
-          if (!linesOk[key].answer.moveSan) {
-            if (validMoves.hasOwnProperty(key)) {
-              validMoves[key].response.moveSan = moveMessage.san;
-            }
+          if (!validMoves[key].response.moveSan) {
+            validMoves[key].response.moveSan = moveMessage.san;
           }
         }
         newData[currentLevel - 1].validMoves = validMoves;
-        console.log(newData);
         return newData;
       })
       if (!updatedLinesOk[3].good) {
@@ -289,11 +267,10 @@ function App() {
     } else if (moveMessage.message === 'NO') {
       const updatedLinesOk = { ...linesOk };
       for (const key in updatedLinesOk) {
-        if (updatedLinesOk.hasOwnProperty(key)) {
-          if (updatedLinesOk[key].checked === true && !updatedLinesOk[key].good) {
-            updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, good: false };
-          }
+        if (updatedLinesOk[key].checked === true && !updatedLinesOk[key].good) {
+          updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: true, failed: true, good: false };
         }
+
       }
       setLinesOk(updatedLinesOk);
       setCounters({ ...counters, badMoves: counters.badMoves + 1 });
@@ -322,22 +299,22 @@ function App() {
     if (validMoves == null && !linesOk[1].good) {
       switch (gameName) {
         case 'italian':
-          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          fetchLichessMoves('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
           break;
         case 'sicilian':
-          fetchLichessMovesPerFen('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2');
+          fetchLichessMoves('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2');
           break;
         case 'ruylopez':
-          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
+          fetchLichessMoves('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3');
           break;
         case 'french':
-          fetchLichessMovesPerFen('rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
+          fetchLichessMoves('rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
           break;
         case 'scoth':
-          fetchLichessMovesPerFen('r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3');
+          fetchLichessMoves('r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3');
           break;
         case 'carokann':
-          fetchLichessMovesPerFen('rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
+          fetchLichessMoves('rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3');
           break;
         default:
           break;
@@ -416,13 +393,12 @@ function App() {
                 let line = 0;
                 const updatedLinesOk = { ...linesOk };
                 for (const key in updatedLinesOk) {
-                  if (updatedLinesOk.hasOwnProperty(key)) {
-                    if (updatedLinesOk[key].checked === false) {
-                      updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: false, good: false };
-                      setValidationDisable(true);
-                      line = key;
-                      break;
-                    }
+                  if (updatedLinesOk[key].checked === false) {
+                    updatedLinesOk[key] = { ...updatedLinesOk[key], checked: true, answer: false, failed: false, good: false };
+                    setValidationDisable(true);
+                    line = key;
+                    break;
+
                   }
                 }
                 if (line > 0) {
@@ -434,53 +410,25 @@ function App() {
                 setCenteredTextBot('Guess the best move for white')
               }
             }}>{validationButtonText}</button>
-            : 'Click the Continue button below desired variation to move to the next move in this line.'}
+            : 'Click the Continue button below desired variation to move to the next move in this line.'
+          }
 
           <div className='variationsBoxes'>
-
-            {/* {setTimeout(() => {
-              const validMoves = levelFen[currentLevel - 1].validMoves; // Assuming levelFen is an array of objects
-              const keys = Object.keys(validMoves);
-
-              keys.map((key) => {
-                const validMove = validMoves[key];
-                return (
-                  <div style={{ position: 'relative' }} key={key}>
-                    {linesOk[1].checked ? (
-                      <>
-                        <span>Cp: {convertCp(validMove.cp)}</span>
-                        <span>Black’s move: {validMove.move}</span>
-                        <span>White’s move: {linesOk[1].good ? validMove.response : '?'}</span>
-                        <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
-                      </>
-                    ) : ''}
-                    {linesOk[3].good ? (
-                      <button className='continueButton' disabled={validMove.moves ? validMove.moves : ''} onClick={() => {
-                        fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
-                      }}> Continue </button>
-                    ) : ''}
-                  </div>
-                );
-              });
-            }, 300)
-
-            } */}
 
             <div style={{ position: 'relative' }}>
               {linesOk[1].checked ?
                 <>
-                  {console.log('giveeee', levelFen)}
                   <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.cp : '?'}</span>
                   <span>Black’s move: {levelFen[currentLevel - 1].validMoves[1].moveSan}</span>
                   <span>White’s move: {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[1].response.moveSan : '?'} </span>
-                  <span>Result: {!linesOk[1].answer ? '' : (linesOk[1].good ? 'CORRECT' : 'WRONG')}</span>
+                  <span>Result: {!linesOk[1].good ? '' : (!linesOk[1].failed ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[1].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[1].moves ? levelFen[currentLevel - 1].validMoves[1].moves : ''} onClick={() => {
                   const userMove = { move: levelFen[currentLevel - 1].validMoves[1].response.moveSan, turn: isWhitesMove ? 'w' : 'b' };
                   const botMove = { move: levelFen[currentLevel - 1].validMoves[1].moveSan, turn: isWhitesMove ? 'b' : 'w' };
-                  setMovesArray([...movesArray, botMove, userMove])
-                  fetchLichessMovesPerFen(linesOk[1].afterMoveFen);
+                  setMovesArray([...movesArray, { botMove: botMove, userMove: userMove }])
+                  fetchLichessMoves(linesOk[1].afterMoveFen);
                   setTimeout(() => {
                     findEnfgineBestMove(fen)
                   }, 400);
@@ -491,17 +439,17 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[2].checked ?
                 <>
-                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[2].response.cp : '?'}</span>
+                  <span>Cp:  {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[2].moveSan}</span>
                   <span>White’s move: {linesOk[2].good ? levelFen[currentLevel - 1].validMoves[2].response.moveSan : '?'} </span>
-                  <span>Result: {!linesOk[2].answer ? '' : (linesOk[2].good ? 'CORRECT' : 'WRONG')}</span>
+                  <span>Result: {!linesOk[2].good ? '' : (!linesOk[2].failed ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[2].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[2].moves ? levelFen[currentLevel - 1].validMoves[2].moves : ''} onClick={() => {
                   const userMove = { move: levelFen[currentLevel - 1].validMoves[2].response.moveSan, turn: isWhitesMove ? 'w' : 'b' };
                   const botMove = { move: levelFen[currentLevel - 1].validMoves[2].moveSan, turn: isWhitesMove ? 'b' : 'w' };
-                  setMovesArray([...movesArray, botMove, userMove])
-                  fetchLichessMovesPerFen(linesOk[2].afterMoveFen);
+                  setMovesArray([...movesArray, { botMove: botMove, userMove: userMove }])
+                  fetchLichessMoves(linesOk[2].afterMoveFen);
                   setTimeout(() => {
                     findEnfgineBestMove(fen)
                   }, 400);
@@ -511,17 +459,17 @@ function App() {
             <div style={{ position: 'relative' }}>
               {linesOk[3].checked ?
                 <>
-                  <span>Cp:  {linesOk[1].good ? levelFen[currentLevel - 1].validMoves[3].response.cp : '?'}</span>
+                  <span>Cp:  {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response.cp : '?'}</span>
                   <span>Black’s move:  {levelFen[currentLevel - 1].validMoves[3].moveSan}</span>
                   <span>White’s move: {linesOk[3].good ? levelFen[currentLevel - 1].validMoves[3].response.moveSan : '?'} </span>
-                  <span>Result: {!linesOk[3].answer ? '' : (linesOk[3].good ? 'CORRECT' : 'WRONG')}</span>
+                  <span>Result: {!linesOk[3].good ? '' : (!linesOk[3].failed ? 'CORRECT' : 'WRONG')}</span>
                 </> : ''}
               {linesOk[3].good ?
                 <button className='continueButton' disabled={levelFen[currentLevel - 1].validMoves[3].moves ? levelFen[currentLevel - 1].validMoves[3].moves : ''} onClick={() => {
                   const userMove = { move: levelFen[currentLevel - 1].validMoves[3].response.moveSan, turn: isWhitesMove ? 'w' : 'b' };
                   const botMove = { move: levelFen[currentLevel - 1].validMoves[3].moveSan, turn: isWhitesMove ? 'b' : 'w' };
-                  setMovesArray([...movesArray, botMove, userMove])
-                  fetchLichessMovesPerFen(linesOk[3].afterMoveFen);
+                  setMovesArray([...movesArray, { botMove: botMove, userMove: userMove }])
+                  fetchLichessMoves(linesOk[3].afterMoveFen);
                   setTimeout(() => {
                     findEnfgineBestMove(fen)
                   }, 400);

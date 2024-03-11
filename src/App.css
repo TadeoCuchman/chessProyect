@@ -11,7 +11,8 @@ table {
   border-radius: 10px;
 }
 
-th, td {
+th,
+td {
   border: 1px solid black;
   padding: 5px;
   text-align: center;
@@ -47,11 +48,16 @@ button {
   width: 30%;
 }
 
-.continueButton{
+.continueButton {
   position: absolute;
   height: 20px;
   bottom: -20px;
   right: 0;
   width: 50%;
   transform: translateX(-50%);
+}
+
+.moveDisplayed {
+  margin-left: 2px;
+  margin-right: 2px;
 }
